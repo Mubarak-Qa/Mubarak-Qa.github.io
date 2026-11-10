@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="description" content="Mubarak Alsulaiti - مبارك السليطي، مطوّر تطبيقات من قطر. تطبيق Qatar Prayer لمواقيت الصلاة.">
+<style>html{color-scheme:light}body{margin:0}img{max-width:100%}[hidden]{display:none!important}</style>
+<title>Mubarak Alsulaiti</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Reem+Kufi:wght@500;700&family=Space+Grotesk:wght@400;500;700&family=Tajawal:wght@400;500;700&display=swap">
+<style>
+/* Layout: asymmetric hero (name left/right by language, app mockup opposite), then a feature grid, a short about band and contact. Maroon is the single accent. */
+:root{
+  --bg:#F6F2F3; --surface:#FFFFFF; --fg:#241519; --muted:#6D5B61; --line:#E5D9DC;
+  --accent:#8A1538; --accent-fg:#FFFFFF; --accent-soft:#F4E3E8; --on-accent-soft:#8A1538;
+  --display:'Reem Kufi','Space Grotesk',sans-serif; --body:'Tajawal','Space Grotesk',system-ui,sans-serif; --latin:'Space Grotesk','Tajawal',sans-serif;
+}
+@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){
+  --bg:#130F11; --surface:#1E181B; --fg:#F3EAED; --muted:#B5A5AB; --line:#35282D;
+  --accent:#E8A3B8; --accent-fg:#2A0E17; --accent-soft:#3A1B26; --on-accent-soft:#F2B8C8; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#130F11; --surface:#1E181B; --fg:#F3EAED; --muted:#B5A5AB; --line:#35282D;
+  --accent:#E8A3B8; --accent-fg:#2A0E17; --accent-soft:#3A1B26; --on-accent-soft:#F2B8C8; color-scheme:dark}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.75;
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));padding-block:0}
+a{color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:3px;border-radius:4px}
+.wrap{max-width:1040px;margin-inline:auto}
+header{display:flex;align-items:center;justify-content:space-between;gap:12px;padding-block:18px;flex-wrap:wrap}
+.mark{display:flex;align-items:center;gap:10px;font-family:var(--latin);font-weight:700;letter-spacing:.2px}
+.mark svg{width:34px;height:34px;border-radius:9px}
+.tools{display:flex;gap:8px}
+.tool{font:inherit;font-size:14px;font-weight:500;background:var(--surface);color:var(--fg);border:1px solid var(--line);border-radius:10px;padding:6px 14px;min-height:38px;cursor:pointer}
+.tool:hover{border-color:var(--accent)}
+.hero{display:grid;grid-template-columns:1.25fr .75fr;gap:40px;align-items:center;padding-block:36px 56px}
+.eyebrow{font-size:14px;font-weight:500;color:var(--accent);letter-spacing:.04em;margin:0 0 10px}
+h1{font-family:var(--display);font-weight:700;font-size:clamp(40px,7vw,76px);line-height:1.15;margin:0;text-wrap:balance}
+.latin-name{font-family:var(--latin);font-size:clamp(20px,3vw,28px);color:var(--muted);margin:6px 0 0;font-weight:400;direction:ltr;text-align:start}
+html[dir="rtl"] .latin-name{text-align:right}
+.swash{width:min(300px,70%);height:auto;margin-top:6px;color:var(--accent)}
+.lead{max-width:34em;color:var(--muted);margin:22px 0 28px}
+.cta{display:flex;gap:12px;flex-wrap:wrap}
+.btn{display:inline-flex;align-items:center;gap:8px;font:inherit;font-weight:700;text-decoration:none;border-radius:12px;padding:11px 20px;min-height:46px}
+.btn.primary{background:var(--accent);color:var(--accent-fg)}
+.btn.ghost{border:1px solid var(--line);background:var(--surface)}
+.btn:hover{filter:brightness(1.06)}
+.phone{justify-self:center;width:min(250px,100%);background:var(--surface);border:1px solid var(--line);border-radius:34px;padding:14px 12px 16px}
+.screen{background:var(--bg);border-radius:24px;padding:14px 12px;direction:rtl;font-size:13px}
+.hero-card{background:#8A1538;color:#fff;border-radius:16px;padding:12px 14px}
+.hero-card small{color:#D9B7C2;display:block;font-size:12px}
+.hero-card b{font-family:var(--display);font-size:26px;display:block;line-height:1.3}
+.hero-card .cd{font-family:var(--latin);font-size:28px;direction:ltr;text-align:start;font-variant-numeric:tabular-nums}
+.rows{margin-top:10px;background:var(--surface);border-radius:14px;padding:4px 0}
+.row{display:flex;justify-content:space-between;padding:6px 12px;font-size:13px}
+.row.on{background:var(--accent-soft);color:var(--on-accent-soft);font-weight:700}
+.row span:last-child{font-family:var(--latin);direction:ltr;font-variant-numeric:tabular-nums}
+.cap{font-size:12px;color:var(--muted);text-align:center;margin:10px 0 0}
+section{padding-block:44px;border-top:1px solid var(--line)}
+h2{font-family:var(--display);font-size:clamp(26px,4vw,36px);margin:0 0 8px;line-height:1.3}
+.sub{color:var(--muted);margin:0 0 28px;max-width:38em}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:14px}
+.feat{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:18px 18px 16px}
+.feat h3{font-size:17px;margin:0 0 4px;font-weight:700}
+.feat p{margin:0;color:var(--muted);font-size:15px;line-height:1.65}
+.chips{display:flex;flex-wrap:wrap;gap:8px;margin-top:22px}
+.chip{background:var(--accent-soft);color:var(--on-accent-soft);border-radius:999px;padding:3px 14px;font-size:14px;font-weight:500}
+.about p{max-width:40em;margin:0 0 14px}
+.about-grid{display:grid;grid-template-columns:1fr 220px;gap:32px;align-items:center}
+.sig{width:220px;max-width:100%;border-radius:20px;justify-self:center}
+.mail{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin:0 0 14px}
+.mail code{font-family:var(--latin);font-size:17px;direction:ltr;background:var(--surface);border:1px solid var(--line);border-radius:10px;padding:8px 14px;user-select:all}
+@media (max-width:760px){.about-grid{grid-template-columns:1fr}.sig{justify-self:start;width:160px}}
+footer{padding-block:28px 36px;color:var(--muted);font-size:14px;border-top:1px solid var(--line)}
+@media (max-width:760px){.hero{grid-template-columns:1fr;gap:28px;padding-block:20px 36px}}
+@media (prefers-reduced-motion:no-preference){.btn,.tool{transition:filter .15s,border-color .15s}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="mark">
+      <svg viewBox="0 0 108 108" role="img" aria-label="Qatar Prayer"><rect width="108" height="108" fill="#8A1538"/><g transform="scale(0.964)" fill="#fff"><path d="M20,82 A26,26 0 0 1 72,82 Z"/><rect x="45" y="46" width="2" height="10"/><rect x="80" y="42" width="8" height="40"/><path d="M80,42L88,42L84,30Z"/><rect x="16" y="82" width="80" height="6"/></g></svg>
+      <span>Mubarak Alsulaiti</span>
+    </div>
+    <div class="tools">
+      <button class="tool" id="lang" type="button">EN</button>
+      <button class="tool" id="theme" type="button" aria-label="Theme">☾</button>
+    </div>
+  </header>
+
+  <main>
+    <div class="hero">
+      <div>
+        <p class="eyebrow" data-ar="مطوّر تطبيقات · قطر" data-en="App developer · Qatar">مطوّر تطبيقات · قطر</p>
+        <h1 data-ar="مبارك السليطي" data-en="Mubarak Alsulaiti">مبارك السليطي</h1>
+        <p class="latin-name" id="altname">Mubarak Alsulaiti</p>
+        <svg class="swash" viewBox="0 0 360 50" fill="none" aria-hidden="true"><path d="M8 30 C70 8, 150 6, 205 22 S300 40, 352 14" stroke="currentColor" stroke-width="3.2" stroke-linecap="round"/><path d="M60 38 C130 26, 220 30, 290 38" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" opacity=".6"/></svg>
+        <p class="lead" data-ar="أبني تطبيقات بسيطة وسريعة تخدم الحياة اليومية، بتصميم واضح يعمل بدون تعقيد. تطبيقي الأول مواقيت الصلاة في قطر." data-en="I build simple, fast apps for everyday life, with a clear design that works without fuss. My first app is a prayer times app for Qatar.">أبني تطبيقات بسيطة وسريعة تخدم الحياة اليومية، بتصميم واضح يعمل بدون تعقيد. تطبيقي الأول مواقيت الصلاة في قطر.</p>
+        <div class="cta">
+          <a class="btn primary" href="#app" data-ar="تطبيق Qatar Prayer" data-en="Qatar Prayer app">تطبيق Qatar Prayer</a>
+          <a class="btn ghost" href="#contact" data-ar="تواصل معي" data-en="Get in touch">تواصل معي</a>
+        </div>
+      </div>
+      <div>
+        <div class="phone" aria-hidden="true">
+          <div class="screen">
+            <div class="hero-card"><small>الصلاة القادمة</small><b>العصر</b><small>الأذان · الإقامة</small><span class="cd">00:42:10</span></div>
+            <div class="rows">
+              <div class="row"><span>الفجر</span><span>—:—</span></div>
+              <div class="row"><span>الظهر</span><span>—:—</span></div>
+              <div class="row on"><span>العصر</span><span>—:—</span></div>
+              <div class="row"><span>المغرب</span><span>—:—</span></div>
+              <div class="row"><span>العشاء</span><span>—:—</span></div>
+            </div>
+          </div>
+        </div>
+        <p class="cap" data-ar="شكل الواجهة (توضيحي)" data-en="Interface preview (illustrative)">شكل الواجهة (توضيحي)</p>
+      </div>
+    </div>
+
+    <section id="app">
+      <h2 data-ar="Qatar Prayer" data-en="Qatar Prayer">Qatar Prayer</h2>
+      <p class="sub" data-ar="تطبيق أندرويد لمواقيت الصلاة في دولة قطر. يحسب الأوقات داخل الجهاز، فيعمل بدون إنترنت، وينبّهك عند الأذان والإقامة." data-en="An Android app for prayer times in Qatar. It calculates times on the device, so it works without internet and alerts you at the adhan and the iqama.">تطبيق أندرويد لمواقيت الصلاة في دولة قطر. يحسب الأوقات داخل الجهاز، فيعمل بدون إنترنت، وينبّهك عند الأذان والإقامة.</p>
+      <div class="grid">
+        <div class="feat"><h3 data-ar="تنبيه الأذان والإقامة" data-en="Adhan and iqama alerts">تنبيه الأذان والإقامة</h3><p data-ar="تنبيه لكل صلاة، وتشغيل أو إيقاف كل واحد على حدة، مع مدة إقامة قابلة للضبط." data-en="An alert for each prayer, switched on or off separately, with an adjustable iqama delay.">تنبيه لكل صلاة، وتشغيل أو إيقاف كل واحد على حدة، مع مدة إقامة قابلة للضبط.</p></div>
+        <div class="feat"><h3 data-ar="تعديل الأوقات يدوياً" data-en="Manual time adjustment">تعديل الأوقات يدوياً</h3><p data-ar="صحّح وقت أي صلاة بالدقائق ليطابق التقويم الذي تعتمده." data-en="Correct any prayer time by a few minutes to match the calendar you follow.">صحّح وقت أي صلاة بالدقائق ليطابق التقويم الذي تعتمده.</p></div>
+        <div class="feat"><h3 data-ar="ويدجت بثلاثة أحجام" data-en="Widgets in three sizes">ويدجت بثلاثة أحجام</h3><p data-ar="عدّاد تنازلي للصلاة القادمة على شاشتك الرئيسية، صغير أو عريض أو كبير." data-en="A countdown to the next prayer on your home screen, small, wide or large.">عدّاد تنازلي للصلاة القادمة على شاشتك الرئيسية، صغير أو عريض أو كبير.</p></div>
+        <div class="feat"><h3 data-ar="مدن قطر" data-en="Cities across Qatar">مدن قطر</h3><p data-ar="الدوحة والريان والوكرة ومسيعيد وأم صلال والخور ودخان والشمال." data-en="Doha, Al Rayyan, Al Wakrah, Mesaieed, Umm Salal, Al Khor, Dukhan and Al Shamal.">الدوحة والريان والوكرة ومسيعيد وأم صلال والخور ودخان والشمال.</p></div>
+        <div class="feat"><h3 data-ar="مساجد قريبة" data-en="Nearby mosques">مساجد قريبة</h3><p data-ar="زر يفتح الخرائط ويبحث عن المساجد حول موقعك." data-en="A button that opens your maps app and searches for mosques around you.">زر يفتح الخرائط ويبحث عن المساجد حول موقعك.</p></div>
+        <div class="feat"><h3 data-ar="عربي وإنجليزي، نهاري وليلي" data-en="Arabic and English, light and dark">عربي وإنجليزي، نهاري وليلي</h3><p data-ar="واجهة بلغتين ووضعين، وبدون إعلانات ولا جمع بيانات." data-en="Two languages, two themes, no ads and no data collection.">واجهة بلغتين ووضعين، وبدون إعلانات ولا جمع بيانات.</p></div>
+      </div>
+      <div class="chips">
+        <span class="chip">Kotlin</span><span class="chip">Android</span><span class="chip" data-ar="يعمل بدون إنترنت" data-en="Works offline">يعمل بدون إنترنت</span>
+      </div>
+    </section>
+
+    <section class="about" id="about">
+      <div class="about-grid"><div>
+      <h2 data-ar="نبذة عني" data-en="About me">نبذة عني</h2>
+      <p data-ar="اسمي مبارك السليطي، من قطر. أحب أن أحوّل الفكرة اليومية إلى تطبيق يعمل على الجوال فعلاً، بدءاً من الحساب الفلكي للأوقات وحتى الإشعارات والويدجت." data-en="I'm Mubarak Alsulaiti, from Qatar. I like turning an everyday idea into an app that really runs on the phone, from the astronomical calculation of times to notifications and widgets.">اسمي مبارك السليطي، من قطر. أحب أن أحوّل الفكرة اليومية إلى تطبيق يعمل على الجوال فعلاً، بدءاً من الحساب الفلكي للأوقات وحتى الإشعارات والويدجت.</p>
+      </div><svg class="sig" viewBox="0 0 220 220" role="img" aria-label="Mubarak Alsulaiti"><rect width="220" height="220" fill="#8A1538"/><text x="110" y="92" text-anchor="middle" fill="#fff" font-size="34" font-weight="700" font-family="'Reem Kufi','Tajawal',sans-serif">مبارك السليطي</text><text x="110" y="128" text-anchor="middle" fill="#fff" font-size="17" font-family="'Space Grotesk','Tajawal',sans-serif" font-style="italic">Mubarak Alsulaiti</text><g transform="translate(36,140) scale(0.5)" fill="none" stroke="#fff" stroke-linecap="round"><path d="M8 30 C70 8, 150 6, 205 22 S300 40, 352 14" stroke-width="3.2"/><path d="M60 38 C130 26, 220 30, 290 38" stroke-width="1.6" opacity=".6"/></g></svg></div>
+    </section>
+
+    <section id="contact">
+      <h2 data-ar="تواصل معي" data-en="Get in touch">تواصل معي</h2>
+      <p class="sub" data-ar="للاقتراحات أو الملاحظات على التطبيق، أو لأي فكرة تريد تحويلها إلى تطبيق." data-en="For suggestions or feedback on the app, or any idea you'd like turned into an app.">للاقتراحات أو الملاحظات على التطبيق، أو لأي فكرة تريد تحويلها إلى تطبيق.</p>
+      <div class="mail"><code id="mailtxt">qtr.50@hotmail.com</code><button class="tool" id="copymail" type="button" data-ar="نسخ البريد" data-en="Copy email">نسخ البريد</button></div>
+    </section>
+  </main>
+
+  <footer><span data-ar="© مبارك السليطي" data-en="© Mubarak Alsulaiti">© مبارك السليطي</span></footer>
+</div>
+
+<script>
+(function(){
+  var root=document.documentElement, lang='ar', theme='';
+  try{lang=localStorage.getItem('ms-lang')||'ar';theme=localStorage.getItem('ms-theme')||''}catch(e){}
+  function dark(){return theme?theme==='dark':matchMedia('(prefers-color-scheme: dark)').matches}
+  function applyLang(){
+    root.lang=lang; root.dir=lang==='ar'?'rtl':'ltr';
+    document.querySelectorAll('[data-ar]').forEach(function(el){el.textContent=el.getAttribute('data-'+lang)});
+    document.getElementById('lang').textContent=lang==='ar'?'EN':'عربي';
+    document.getElementById('altname').textContent=lang==='ar'?'Mubarak Alsulaiti':'مبارك السليطي';
+  }
+  function applyTheme(){
+    if(theme) root.setAttribute('data-theme',theme); else root.removeAttribute('data-theme');
+    document.getElementById('theme').textContent=dark()?'☀':'☾';
+  }
+  document.getElementById('lang').onclick=function(){lang=lang==='ar'?'en':'ar';try{localStorage.setItem('ms-lang',lang)}catch(e){};applyLang()};
+  document.getElementById('theme').onclick=function(){theme=dark()?'light':'dark';try{localStorage.setItem('ms-theme',theme)}catch(e){};applyTheme()};
+  document.getElementById('copymail').onclick=function(){
+    var b=this,t='qtr.50@hotmail.com',ok=function(){b.textContent=lang==='ar'?'تم النسخ':'Copied';setTimeout(function(){b.textContent=b.getAttribute('data-'+lang)},1500)};
+    var fb=function(){var r=document.createRange();r.selectNodeContents(document.getElementById('mailtxt'));var sel=getSelection();sel.removeAllRanges();sel.addRange(r)};
+    try{navigator.clipboard.writeText(t).then(ok,fb)}catch(e){fb()}
+  };
+  applyLang();applyTheme();
+})();
+</script>
+
+</body>
+</html>
