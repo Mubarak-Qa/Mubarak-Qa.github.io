@@ -1,44 +1,136 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
 
+    <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.SYSTEM_ALERT_WINDOW" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
     <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PLAYBACK" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS" />
     <uses-permission android:name="android.permission.RECEIVE_BOOT_COMPLETED" />
+    <uses-permission android:name="android.permission.SET_WALLPAPER" />
 
-    <!-- Allow resolving the Waze package on Android 11+ -->
+    <!-- BYD DiLink vehicle-framework permissions. Names are community-reported and
+         unverified; unknown permissions are simply ignored by Android. The car scan in
+         Settings shows which ones the system actually grants. -->
+    <uses-permission android:name="android.permission.BYDAUTO_AC_COMMON" />
+    <uses-permission android:name="android.permission.BYDAUTO_AC_GET" />
+    <uses-permission android:name="android.permission.BYDAUTO_AC_SET" />
+    <uses-permission android:name="android.permission.BYDAUTO_BODYWORK_COMMON" />
+    <uses-permission android:name="android.permission.BYDAUTO_BODYWORK_GET" />
+    <uses-permission android:name="android.permission.BYDAUTO_BODYWORK_SET" />
+    <uses-permission android:name="android.permission.BYDAUTO_SPEED_COMMON" />
+    <uses-permission android:name="android.permission.BYDAUTO_SPEED_GET" />
+    <uses-permission android:name="android.permission.BYDAUTO_SPEED_SET" />
+    <uses-permission android:name="android.permission.BYDAUTO_STATISTIC_COMMON" />
+    <uses-permission android:name="android.permission.BYDAUTO_STATISTIC_GET" />
+    <uses-permission android:name="android.permission.BYDAUTO_STATISTIC_SET" />
+    <uses-permission android:name="android.permission.BYDAUTO_ENERGY_COMMON" />
+    <uses-permission android:name="android.permission.BYDAUTO_ENERGY_GET" />
+    <uses-permission android:name="android.permission.BYDAUTO_ENERGY_SET" />
+    <uses-permission android:name="android.permission.BYDAUTO_TYRE_COMMON" />
+    <uses-permission android:name="android.permission.BYDAUTO_TYRE_GET" />
+    <uses-permission android:name="android.permission.BYDAUTO_TYRE_SET" />
+    <uses-permission android:name="android.permission.BYDAUTO_GEARBOX_COMMON" />
+    <uses-permission android:name="android.permission.BYDAUTO_GEARBOX_GET" />
+    <uses-permission android:name="android.permission.BYDAUTO_GEARBOX_SET" />
+    <uses-permission android:name="android.permission.BYDAUTO_ENGINE_COMMON" />
+    <uses-permission android:name="android.permission.BYDAUTO_ENGINE_GET" />
+    <uses-permission android:name="android.permission.BYDAUTO_ENGINE_SET" />
+    <uses-permission android:name="android.permission.BYDAUTO_SETTING_COMMON" />
+    <uses-permission android:name="android.permission.BYDAUTO_SETTING_GET" />
+    <uses-permission android:name="android.permission.BYDAUTO_SETTING_SET" />
+    <uses-permission android:name="android.permission.BYDAUTO_INSTRUMENT_COMMON" />
+    <uses-permission android:name="android.permission.BYDAUTO_INSTRUMENT_GET" />
+    <uses-permission android:name="android.permission.BYDAUTO_INSTRUMENT_SET" />
+    <uses-permission android:name="android.permission.BYDAUTO_SENSOR_COMMON" />
+    <uses-permission android:name="android.permission.BYDAUTO_SENSOR_GET" />
+    <uses-permission android:name="android.permission.BYDAUTO_SENSOR_SET" />
+    <uses-permission android:name="android.permission.BYDAUTO_CHARGING_COMMON" />
+    <uses-permission android:name="android.permission.BYDAUTO_CHARGING_GET" />
+    <uses-permission android:name="android.permission.BYDAUTO_CHARGING_SET" />
+    <uses-permission android:name="android.permission.BYDAUTO_LIGHT_COMMON" />
+    <uses-permission android:name="android.permission.BYDAUTO_LIGHT_GET" />
+    <uses-permission android:name="android.permission.BYDAUTO_LIGHT_SET" />
+    <uses-permission android:name="android.permission.BYDAUTO_DOORLOCK_COMMON" />
+    <uses-permission android:name="android.permission.BYDAUTO_DOORLOCK_GET" />
+    <uses-permission android:name="android.permission.BYDAUTO_DOORLOCK_SET" />
+    <uses-permission android:name="android.permission.BYDAUTO_SAFETYBELT_COMMON" />
+    <uses-permission android:name="android.permission.BYDAUTO_SAFETYBELT_GET" />
+    <uses-permission android:name="android.permission.BYDAUTO_SAFETYBELT_SET" />
+    <uses-permission android:name="android.permission.BYDAUTO_SEAT_COMMON" />
+    <uses-permission android:name="android.permission.BYDAUTO_SEAT_GET" />
+    <uses-permission android:name="android.permission.BYDAUTO_SEAT_SET" />
+    <uses-permission android:name="android.permission.BYDAUTO_SPECIAL_COMMON" />
+    <uses-permission android:name="android.permission.BYDAUTO_SPECIAL_GET" />
+    <uses-permission android:name="android.permission.BYDAUTO_SPECIAL_SET" />
+    <uses-permission android:name="android.permission.BYDAUTO_MULTIMEDIA_COMMON" />
+    <uses-permission android:name="android.permission.BYDAUTO_MULTIMEDIA_GET" />
+    <uses-permission android:name="android.permission.BYDAUTO_MULTIMEDIA_SET" />
+    <uses-permission android:name="android.permission.BYDAUTO_PANORAMA_COMMON" />
+    <uses-permission android:name="android.permission.BYDAUTO_PANORAMA_GET" />
+    <uses-permission android:name="android.permission.BYDAUTO_PANORAMA_SET" />
+    <uses-permission android:name="android.permission.BYDAUTO_RADAR_COMMON" />
+    <uses-permission android:name="android.permission.BYDAUTO_RADAR_GET" />
+    <uses-permission android:name="android.permission.BYDAUTO_RADAR_SET" />
+
     <queries>
         <package android:name="com.waze" />
         <intent>
             <action android:name="android.intent.action.VIEW" />
             <data android:scheme="waze" />
         </intent>
+        <intent>
+            <action android:name="android.intent.action.MAIN" />
+            <category android:name="android.intent.category.LAUNCHER" />
+        </intent>
     </queries>
 
     <application
+        android:name=".App"
         android:allowBackup="true"
         android:icon="@drawable/ic_speed"
         android:label="@string/app_name"
+        android:localeConfig="@xml/locales_config"
         android:supportsRtl="true"
+        android:usesCleartextTraffic="true"
         android:theme="@style/AppTheme">
 
         <activity
-            android:name=".MainActivity"
+            android:name=".ui.MainActivity"
             android:exported="true"
-            android:configChanges="orientation|screenSize|screenLayout|keyboardHidden">
+            android:resizeableActivity="true"
+            android:configChanges="orientation|screenSize|screenLayout|smallestScreenSize|keyboardHidden">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".wallpaper.PassengerWallpaperActivity"
+            android:exported="false"
+            android:resizeableActivity="true"
+            android:theme="@style/FullscreenTheme" />
+
         <service
             android:name=".SpeedOverlayService"
             android:exported="false"
             android:foregroundServiceType="location" />
+
+        <service
+            android:name=".radio.RadioService"
+            android:exported="false"
+            android:foregroundServiceType="mediaPlayback" />
+
+        <service
+            android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"
+            android:enabled="false"
+            android:exported="false">
+            <meta-data android:name="autoStoreLocales" android:value="true" />
+        </service>
 
         <receiver
             android:name=".BootReceiver"

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <color name="brand">#FF0277BD</color>
+    <color name="danger">#FFC62828</color>
+    <style name="AppTheme" parent="Theme.Material3.DayNight.NoActionBar">
+        <item name="colorPrimary">@color/brand</item>
+        <item name="colorSecondary">#FF26A69A</item>
+    </style>
+    <style name="FullscreenTheme" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="android:windowFullscreen">true</item>
+        <item name="android:windowBackground">@android:color/black</item>
+    </style>
+    <style name="SectionTitle">
+        <item name="android:textSize">22sp</item>
+        <item name="android:textStyle">bold</item>
+        <item name="android:layout_marginTop">20dp</item>
+        <item name="android:layout_marginBottom">8dp</item>
+        <item name="android:textColor">?attr/colorPrimary</item>
+    </style>
+    <style name="BigButton" parent="Widget.Material3.Button">
+        <item name="android:minHeight">72dp</item>
+        <item name="android:textSize">20sp</item>
+    </style>
+    <style name="BigOutlinedButton" parent="Widget.Material3.Button.OutlinedButton">
+        <item name="android:minHeight">72dp</item>
+        <item name="android:textSize">20sp</item>
+    </style>
+</resources>

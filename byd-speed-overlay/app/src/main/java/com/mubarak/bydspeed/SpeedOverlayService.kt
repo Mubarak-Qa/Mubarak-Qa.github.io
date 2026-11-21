@@ -26,6 +26,7 @@ import androidx.core.content.ContextCompat
 import com.mubarak.bydspeed.speed.BydSpeedProvider
 import com.mubarak.bydspeed.speed.GpsSpeedProvider
 import com.mubarak.bydspeed.speed.SpeedProvider
+import com.mubarak.bydspeed.ui.MainActivity
 import kotlin.math.roundToInt
 
 /** Foreground service that draws a draggable floating speedometer over other apps (e.g. Waze). */
@@ -173,10 +174,15 @@ class SpeedOverlayService : Service() {
             .addAction(Notification.Action.Builder(null, getString(R.string.stop), stopIntent).build())
             .setOngoing(true)
             .build()
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            startForeground(NOTIF_ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
-        } else {
-            startForeground(NOTIF_ID, n)
+        try {
+            if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+                startForeground(NOTIF_ID, n, ServiceInfo.FOREGROUND_SERVICE_TYPE_LOCATION)
+            } else {
+                startForeground(NOTIF_ID, n)
+            }
+        } catch (e: Exception) {
+            // e.g. location permission not granted yet (Android 14 requires it for this type)
+            stopSelf()
         }
     }
 

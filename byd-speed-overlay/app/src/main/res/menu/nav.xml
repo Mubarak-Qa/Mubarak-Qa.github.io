@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+    <item android:id="@+id/nav_car" android:icon="@drawable/ic_car" android:title="@string/tab_car" />
+    <item android:id="@+id/nav_speed" android:icon="@drawable/ic_speedo" android:title="@string/tab_speed" />
+    <item android:id="@+id/nav_radio" android:icon="@drawable/ic_radio" android:title="@string/tab_radio" />
+    <item android:id="@+id/nav_wallpaper" android:icon="@drawable/ic_image" android:title="@string/tab_wallpaper" />
+    <item android:id="@+id/nav_split" android:icon="@drawable/ic_split" android:title="@string/tab_split" />
+    <item android:id="@+id/nav_settings" android:icon="@drawable/ic_settings" android:title="@string/tab_settings" />
+</menu>
