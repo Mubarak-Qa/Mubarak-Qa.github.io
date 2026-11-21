@@ -122,4 +122,8 @@
     <string name="set_reset">Reset</string>
     <string name="set_saved">Saved</string>
     <string name="set_bad_json">Invalid JSON</string>
+    <string name="set_copy_part">Copy part %1$d of %2$d</string>
+    <string name="set_copied_part">Copied part %1$d of %2$d. Paste it, then come back for the next</string>
+    <string name="set_save_file">Save file</string>
+    <string name="set_saved_to">Saved: %1$s</string>
 </resources>

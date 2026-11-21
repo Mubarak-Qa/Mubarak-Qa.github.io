@@ -75,23 +75,44 @@ class SettingsFragment : Fragment() {
         val report = ctx.bodyText("", 14f).apply {
             typeface = Typeface.MONOSPACE; setTextIsSelectable(true); textDirection = View.TEXT_DIRECTION_LTR
         }
+        var parts: List<String> = emptyList()
+        var nextPart = 0
         val buttons = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL; setPadding(0, ctx.dp(8), 0, ctx.dp(8)) }
+        lateinit var copyBtn: MaterialButton
         buttons.addView(MaterialButton(ctx).apply {
             text = getString(R.string.set_scan); textSize = 18f; minHeight = ctx.dp(72)
             setOnClickListener {
                 report.text = getString(R.string.car_loading)
                 io.execute {
                     val r = runCatching { CarBridge.scanReport(ctx.applicationContext) }.getOrElse { it.toString() }
-                    main.post { if (isAdded) report.text = r }
+                    main.post {
+                        if (!isAdded) return@post
+                        report.text = r
+                        parts = CarBridge.split(r); nextPart = 0
+                        copyBtn.text = getString(R.string.set_copy_part, 1, parts.size)
+                    }
                 }
             }
         }, lp(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
-        buttons.addView(MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+        copyBtn = MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
             text = getString(R.string.set_copy); textSize = 18f; minHeight = ctx.dp(72)
             setOnClickListener {
+                if (parts.isEmpty()) parts = CarBridge.split(report.text.toString())
+                if (nextPart >= parts.size) nextPart = 0
                 val cm = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
-                cm.setPrimaryClip(ClipData.newPlainText("scan", report.text))
-                toast(getString(R.string.set_copied))
+                cm.setPrimaryClip(ClipData.newPlainText("scan", parts[nextPart]))
+                toast(getString(R.string.set_copied_part, nextPart + 1, parts.size))
+                nextPart++
+                text = if (nextPart < parts.size) getString(R.string.set_copy_part, nextPart + 1, parts.size)
+                    else getString(R.string.set_copy)
+            }
+        }
+        buttons.addView(copyBtn, lp(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = ctx.dp(8) })
+        buttons.addView(MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+            text = getString(R.string.set_save_file); textSize = 18f; minHeight = ctx.dp(72)
+            setOnClickListener {
+                val where = runCatching { saveReport(ctx, report.text.toString()) }.getOrElse { CarBridge.describe(it) }
+                toast(getString(R.string.set_saved_to, where))
             }
         }, lp(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = ctx.dp(8) })
         buttons.addView(MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
@@ -137,6 +158,25 @@ class SettingsFragment : Fragment() {
         })
 
         return ScrollView(ctx).apply { addView(root) }
+    }
+
+    /** Saves the report to Download/byd_scan.txt (visible from a USB file manager). */
+    private fun saveReport(ctx: Context, text: String): String {
+        val name = "byd_scan.txt"
+        if (android.os.Build.VERSION.SDK_INT >= 29) {
+            val values = android.content.ContentValues().apply {
+                put(android.provider.MediaStore.MediaColumns.DISPLAY_NAME, name)
+                put(android.provider.MediaStore.MediaColumns.MIME_TYPE, "text/plain")
+                put(android.provider.MediaStore.MediaColumns.RELATIVE_PATH, android.os.Environment.DIRECTORY_DOWNLOADS)
+            }
+            val uri = ctx.contentResolver.insert(android.provider.MediaStore.Downloads.EXTERNAL_CONTENT_URI, values)
+                ?: error("insert failed")
+            ctx.contentResolver.openOutputStream(uri)!!.use { it.write(text.toByteArray()) }
+            return "Download/$name"
+        }
+        val f = java.io.File(ctx.getExternalFilesDir(null), name)
+        f.writeText(text)
+        return f.path
     }
 
     private fun refreshCarTab() {

@@ -88,7 +88,7 @@ object CarFeatures {
         Feature("range_fuel", R.string.ind_range_fuel, Kind.READ, "km", get = listOf("getFuelDrivingRangeValue"), getKeywords = listOf("Fuel", "Range")),
         Feature("odometer", R.string.ind_odometer, Kind.READ, "km", get = listOf("getTotalMileageValue"), getKeywords = listOf("Total", "Mileage")),
         Feature("gear", R.string.ind_gear, Kind.READ, get = listOf("getGearboxAutoModeType"), getKeywords = listOf("Gear")),
-        Feature("temp_out", R.string.ind_temp_out, Kind.READ, "°C", getKeywords = listOf("Out", "Temp")),
+        Feature("temp_out", R.string.ind_temp_out, Kind.READ, "°C", get = listOf("getTemperatureSensorValue"), getKeywords = listOf("Out", "Temp")),
         Feature("temp_in", R.string.ind_temp_in, Kind.READ, "°C", getKeywords = listOf("Inside", "Temp")),
     ) + listOf(
         "fl" to R.string.ind_tyre_fl, "fr" to R.string.ind_tyre_fr,

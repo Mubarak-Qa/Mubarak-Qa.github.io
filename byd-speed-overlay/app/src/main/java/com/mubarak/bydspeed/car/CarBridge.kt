@@ -1,8 +1,6 @@
 package com.mubarak.bydspeed.car
 
 import android.content.Context
-import android.content.pm.PackageInfo
-import android.content.pm.PackageManager
 import java.lang.reflect.Method
 import java.lang.reflect.Modifier
 
@@ -116,49 +114,100 @@ object CarBridge {
         return out
     }
 
-    /** Full diagnostic report of the car framework, for sharing with the developer. */
+    /** Methods every BYD device inherits; they add noise to the report. */
+    private val COMMON = setOf(
+        "arrayToStr", "get", "set", "getDevicetype", "getFeatureList", "getGetPermission",
+        "getSetPermission", "getType", "onError", "onPostEvent", "postEvent", "registerListener",
+        "unregisterListener",
+    )
+
+    /** Devices most relevant to the controls, reported first. */
+    private val PRIORITY = listOf("ac", "seat", "setting", "bodywork", "statistic", "speed",
+        "energy", "tyre", "gearbox", "sensor", "engine", "charging", "light")
+
+    private fun shortName(n: String) = n.removePrefix("$PKG.")
+
+    private fun formatValue(v: Any?): String = when (v) {
+        null -> "null"
+        is IntArray -> v.joinToString(",", "[", "]")
+        is DoubleArray -> v.joinToString(",", "[", "]")
+        is FloatArray -> v.joinToString(",", "[", "]")
+        is ByteArray -> "byte[${v.size}]"
+        is Number, is Boolean -> v.toString()
+        is String -> "\"$v\""
+        else -> v.javaClass.simpleName
+    }
+
+    /**
+     * Compact diagnostic report: relevant devices first, inherited boilerplate removed,
+     * live values of simple getters, and constants only where they matter (area/level codes).
+     */
     fun scanReport(context: Context): String = buildString {
         devices = null; errors.clear()
         val devs = devices(context)
-        append("=== BYD framework scan ===\n")
-        append("Android ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT})\n")
-        append("Model: ${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} / ${android.os.Build.DISPLAY}\n")
-        append("Devices found: ${devs.size}\n\n")
-        for ((name, inst) in devs) {
-            append("■ ").append(name.removePrefix("$PKG.")).append('\n')
+        append("=== BYD scan v2 ===\n")
+        append("Android ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT}) · ")
+        append("${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · ${android.os.Build.DISPLAY}\n")
+        append("Devices: ${devs.keys.joinToString(", ") { shortName(it).substringBefore('.') }}\n")
+
+        val ordered = devs.entries.sortedBy { e ->
+            PRIORITY.indexOf(shortName(e.key).substringBefore('.')).let { if (it < 0) 99 else it }
+        }
+        for ((name, inst) in ordered) {
+            val group = shortName(name).substringBefore('.')
+            append("\n■ ").append(shortName(name))
+            runCatching {
+                val g = inst.javaClass.getMethod("getGetPermission").invoke(inst)
+                val st = inst.javaClass.getMethod("getSetPermission").invoke(inst)
+                append("  [get=$g set=$st]")
+            }
+            append('\n')
             inst.javaClass.methods
-                .filter { it.declaringClass.name.startsWith(PKG) && !Modifier.isStatic(it.modifiers) }
+                .filter { it.declaringClass.name.startsWith(PKG) && !Modifier.isStatic(it.modifiers) && it.name !in COMMON }
                 .sortedBy { it.name }
                 .forEach { m ->
-                    append("   ").append(m.returnType.simpleName).append(' ').append(m.name).append('(')
-                    append(m.parameterTypes.joinToString(",") { it.simpleName }).append(")\n")
+                    append("  ").append(m.name).append('(')
+                    append(m.parameterTypes.joinToString(",") { it.simpleName }).append(')')
+                    val simpleGetter = m.name.startsWith("get") && m.parameterTypes.isEmpty() &&
+                        m.returnType != Void.TYPE
+                    if (simpleGetter) {
+                        append(" = ").append(runCatching { formatValue(m.invoke(inst)) }
+                            .getOrElse { "ERR " + describe(it).take(60) })
+                    } else if (m.returnType != Void.TYPE && m.returnType != Int::class.javaPrimitiveType) {
+                        append(':').append(m.returnType.simpleName)
+                    }
+                    append('\n')
                 }
-            // Public int constants (area / mode codes) are essential to call setters correctly.
-            val consts = inst.javaClass.fields.filter {
-                Modifier.isStatic(it.modifiers) && it.type == Int::class.javaPrimitiveType
-            }
-            if (consts.isNotEmpty()) {
-                append("   consts: ")
-                append(consts.joinToString(", ") { f -> "${f.name}=${runCatching { f.getInt(null) }.getOrNull()}" })
-                append('\n')
+            // Constants only for control-related devices (instrument/navigation ones are huge).
+            if (group in setOf("ac", "seat", "setting", "bodywork", "statistic", "gearbox", "tyre", "energy")) {
+                val consts = inst.javaClass.fields.filter {
+                    Modifier.isStatic(it.modifiers) && it.type == Int::class.javaPrimitiveType &&
+                        !it.name.contains("COMMAND_")
+                }
+                if (consts.isNotEmpty()) {
+                    append("  consts: ")
+                    append(consts.joinToString(", ") { f -> "${f.name}=${runCatching { f.getInt(null) }.getOrNull()}" })
+                    append('\n')
+                }
             }
         }
         if (errors.isNotEmpty()) {
-            append("\nNot available:\n")
-            errors.forEach { (k, v) -> append(" - ${k.removePrefix("$PKG.")}: $v\n") }
+            append("\nNot available: ")
+            append(errors.keys.joinToString(", ") { shortName(it) }).append('\n')
         }
-        append("\nBYD permissions:\n")
-        try {
-            val pi: PackageInfo = context.packageManager
-                .getPackageInfo(context.packageName, PackageManager.GET_PERMISSIONS)
-            pi.requestedPermissions?.forEachIndexed { i, p ->
-                if (p.contains("BYDAUTO")) {
-                    val granted = (pi.requestedPermissionsFlags[i] and PackageInfo.REQUESTED_PERMISSION_GRANTED) != 0
-                    if (granted) append(" ✔ ").append(p.removePrefix("android.permission.")).append('\n')
-                }
-            }
-        } catch (_: Throwable) { }
-        append("\nFeature bindings:\n")
-        CarFeatures.all.forEach { f -> append(" - ${f.id}: ${CarFeatures.bindingInfo(context, f)}\n") }
+        append("\nBindings:\n")
+        CarFeatures.all.forEach { f -> append(" ${f.id}: ${CarFeatures.bindingInfo(context, f)}\n") }
+    }
+
+    /** Splits a long report into chat-sized parts on line boundaries. */
+    fun split(report: String, max: Int = 3500): List<String> {
+        val parts = mutableListOf<String>()
+        val sb = StringBuilder()
+        for (line in report.lines()) {
+            if (sb.length + line.length + 1 > max && sb.isNotEmpty()) { parts += sb.toString(); sb.clear() }
+            sb.append(line).append('\n')
+        }
+        if (sb.isNotBlank()) parts += sb.toString()
+        return parts.mapIndexed { i, p -> "[${i + 1}/${parts.size}]\n$p" }
     }
 }
