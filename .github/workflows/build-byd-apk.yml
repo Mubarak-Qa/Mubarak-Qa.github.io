@@ -1,0 +1,25 @@
+name: Build BYD Speed Overlay APK
+
+on:
+  push:
+    paths: ["byd-speed-overlay/**", ".github/workflows/build-byd-apk.yml"]
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: byd-speed-overlay
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "17"
+      - uses: android-actions/setup-android@v3
+      - run: chmod +x gradlew && ./gradlew assembleRelease --no-daemon
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BydSpeedOverlay-apk
+          path: byd-speed-overlay/app/build/outputs/apk/release/*.apk

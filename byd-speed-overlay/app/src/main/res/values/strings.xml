@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">عدّاد السرعة</string>
+    <string name="start_with_waze">تشغيل العدّاد + فتح Waze</string>
+    <string name="start_only">تشغيل العدّاد فقط</string>
+    <string name="stop">إيقاف العدّاد</string>
+    <string name="diagnose">فحص حساسات السيارة</string>
+    <string name="diagnose_hint">اضغط \"فحص حساسات السيارة\" لمعرفة إن كان التطبيق يستطيع قراءة السرعة من السيارة مباشرة. إن لم يتمكن، يستخدم GPS تلقائياً.</string>
+    <string name="limit_fmt">حد التنبيه: %1$d كم/س (يتحول العدّاد للأحمر)</string>
+    <string name="size_fmt">حجم الرقم: %1$d</string>
+    <string name="auto_start">تشغيل تلقائي عند تشغيل السيارة</string>
+    <string name="status_on">● العدّاد يعمل — اسحبه لتغيير مكانه</string>
+    <string name="status_off">○ العدّاد متوقف</string>
+    <string name="overlay_running">عدّاد السرعة يعمل</string>
+    <string name="need_overlay">فعّل صلاحية \"الظهور فوق التطبيقات الأخرى\" ثم ارجع واضغط مرة أخرى</string>
+    <string name="perms_ok">تم منح الصلاحيات، اضغط تشغيل مرة أخرى</string>
+    <string name="waze_missing">لم يتم العثور على تطبيق Waze</string>
+</resources>
