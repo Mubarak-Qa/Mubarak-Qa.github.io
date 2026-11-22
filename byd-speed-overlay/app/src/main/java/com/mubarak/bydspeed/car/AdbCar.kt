@@ -2,6 +2,7 @@ package com.mubarak.bydspeed.car
 
 import android.content.Context
 import io.github.muntashirakon.adb.AdbPairingRequiredException
+import io.github.muntashirakon.adb.AdbAuthenticationFailedException
 import io.github.muntashirakon.adb.AdbStream
 import io.github.muntashirakon.adb.android.AdbMdns
 import org.json.JSONArray
@@ -54,18 +55,29 @@ object AdbCar {
             try {
                 val mgr = AdbCarManager.getInstance(context)
                 log("autoConnect…")
+                val p = when {
+                    port > 0 -> port
+                    legacy -> { diagnose(context); discovered.takeIf { it > 0 } ?: 5555 }
+                    else -> 0
+                }
                 val ok = try {
-                    val p = when {
-                        port > 0 -> port
-                        legacy -> { diagnose(context); discovered.takeIf { it > 0 } ?: 5555 }
-                        else -> 0
-                    }
-                    when {
-                        p > 0 -> {
-                            log("connect 127.0.0.1:$p — tap \"Allow\" on the car if a dialog appears")
-                            mgr.connect("127.0.0.1", p)
+                    if (p <= 0) { log("autoConnect (mDNS)…"); mgr.autoConnect(context, 12_000) }
+                    else {
+                        var result = false
+                        var attempt = 0
+                        while (attempt < 4) {
+                            attempt++
+                            try {
+                                log("connect 127.0.0.1:$p (attempt $attempt)…")
+                                result = mgr.connect("127.0.0.1", p)
+                                break
+                            } catch (e: AdbAuthenticationFailedException) {
+                                log("↯ قُبِلت على السيارة؟ وافق على \"السماح دائماً\" الآن — إعادة المحاولة…")
+                                setState(State.PAIRING_REQUIRED, "waiting for Allow on car")
+                                Thread.sleep(7000)
+                            }
                         }
-                        else -> { log("autoConnect (mDNS)…"); mgr.autoConnect(context, 12_000) }
+                        result
                     }
                 } catch (e: AdbPairingRequiredException) {
                     log("pairing required")

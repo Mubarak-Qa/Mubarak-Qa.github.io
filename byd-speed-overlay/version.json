@@ -1,6 +1,6 @@
 {
-  "versionCode": 12,
-  "versionName": "0.7.4",
-  "apkUrl": "https://mubarak-qa.github.io/byd-speed-overlay/dist/BydCarHub-0.7.4.apk",
-  "notes": "زيادة مهلة الاتصال لـ30 ثانية لتكفي للضغط على السماح."
+  "versionCode": 13,
+  "versionName": "0.7.5",
+  "apkUrl": "https://mubarak-qa.github.io/byd-speed-overlay/dist/BydCarHub-0.7.5.apk",
+  "notes": "إجبار ظهور رسالة السماح وإعادة المحاولة تلقائياً بعد الموافقة."
 }

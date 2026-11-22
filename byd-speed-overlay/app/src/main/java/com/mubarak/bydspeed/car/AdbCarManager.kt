@@ -25,6 +25,7 @@ class AdbCarManager private constructor(context: Context) : AbsAdbConnectionMana
     init {
         setApi(android.os.Build.VERSION.SDK_INT)
         setTimeout(30, java.util.concurrent.TimeUnit.SECONDS)
+        setThrowOnUnauthorised(true)
         val keyFile = File(context.filesDir, "adb_key")
         val certFile = File(context.filesDir, "adb_cert.pem")
         if (keyFile.exists() && certFile.exists()) {
