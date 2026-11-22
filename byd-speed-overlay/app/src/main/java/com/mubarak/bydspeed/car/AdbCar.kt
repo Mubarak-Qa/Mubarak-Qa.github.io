@@ -61,7 +61,10 @@ object AdbCar {
                         else -> 0
                     }
                     when {
-                        p > 0 -> { log("connect 127.0.0.1:$p"); mgr.connect("127.0.0.1", p) }
+                        p > 0 -> {
+                            log("connect 127.0.0.1:$p — tap \"Allow\" on the car if a dialog appears")
+                            mgr.connect("127.0.0.1", p)
+                        }
                         else -> { log("autoConnect (mDNS)…"); mgr.autoConnect(context, 12_000) }
                     }
                 } catch (e: AdbPairingRequiredException) {

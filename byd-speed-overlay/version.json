@@ -1,6 +1,6 @@
 {
-  "versionCode": 11,
-  "versionName": "0.7.3",
-  "apkUrl": "https://mubarak-qa.github.io/byd-speed-overlay/dist/BydCarHub-0.7.3.apk",
-  "notes": "أداة فحص منافذ ADB لاكتشاف المنفذ الحقيقي، ومهلة للاتصال حتى لا يعلّق."
+  "versionCode": 12,
+  "versionName": "0.7.4",
+  "apkUrl": "https://mubarak-qa.github.io/byd-speed-overlay/dist/BydCarHub-0.7.4.apk",
+  "notes": "زيادة مهلة الاتصال لـ30 ثانية لتكفي للضغط على السماح."
 }
