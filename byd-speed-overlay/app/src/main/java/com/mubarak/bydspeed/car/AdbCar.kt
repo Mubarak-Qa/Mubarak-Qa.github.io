@@ -47,7 +47,7 @@ object AdbCar {
     private fun setState(s: State, err: String? = null) { state = s; lastError = err; onChange?.invoke() }
 
     /** Discover the wireless-debugging connect port via mDNS, then connect and start the daemon. */
-    fun connect(context: Context, port: Int = 0) {
+    fun connect(context: Context, port: Int = 0, legacy: Boolean = false) {
         if (state == State.CONNECTING || connected) return
         setState(State.CONNECTING)
         Thread {
@@ -55,8 +55,12 @@ object AdbCar {
                 val mgr = AdbCarManager.getInstance(context)
                 log("autoConnect…")
                 val ok = try {
-                    if (port > 0) { log("connect 127.0.0.1:$port"); mgr.connect("127.0.0.1", port) }
-                    else { log("autoConnect (mDNS)…"); mgr.autoConnect(context, 12_000) }
+                    when {
+                        legacy && port > 0 -> { log("legacy connect 127.0.0.1:$port"); mgr.connect("127.0.0.1", port) }
+                        legacy -> { log("legacy connectTcp (adbd)…"); mgr.connectTcp(context, 15_000) }
+                        port > 0 -> { log("connect 127.0.0.1:$port"); mgr.connect("127.0.0.1", port) }
+                        else -> { log("autoConnect (mDNS)…"); mgr.autoConnect(context, 12_000) }
+                    }
                 } catch (e: AdbPairingRequiredException) {
                     log("pairing required")
                     setState(State.PAIRING_REQUIRED); return@Thread

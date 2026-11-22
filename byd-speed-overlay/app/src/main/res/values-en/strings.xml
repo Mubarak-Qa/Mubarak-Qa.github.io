@@ -173,4 +173,6 @@
     <string name="adbx_error">Error: %1$s</string>
     <string name="adbx_port_hint">Port (number after the colon)</string>
     <string name="adbx_connect_msg">On the car\'s Wireless debugging screen, type the port shown after the IP (e.g. 39755). Leave empty to auto-discover.</string>
+    <string name="adbx_direct">Direct connect (no pairing)</string>
+    <string name="adbx_direct_msg">Try this first. Connects to the classic ADB port (default 5555); the car shows "Allow debugging?" — choose Always allow. Requires USB debugging enabled in Developer options.</string>
 </resources>

@@ -1,6 +1,6 @@
 {
-  "versionCode": 9,
-  "versionName": "0.7.1",
-  "apkUrl": "https://mubarak-qa.github.io/byd-speed-overlay/dist/BydCarHub-0.7.1.apk",
-  "notes": "إدخال منفذ ADB يدوياً للاقتران والاتصال، لتجاوز فشل الاكتشاف التلقائي داخل السيارة."
+  "versionCode": 10,
+  "versionName": "0.7.2",
+  "apkUrl": "https://mubarak-qa.github.io/byd-speed-overlay/dist/BydCarHub-0.7.2.apk",
+  "notes": "اتصال ADB مباشر (بدون إقران) يعرض رسالة السماح الكلاسيكية مثل باقي البرامج."
 }

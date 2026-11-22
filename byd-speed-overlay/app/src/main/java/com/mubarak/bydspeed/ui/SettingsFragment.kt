@@ -118,6 +118,10 @@ class SettingsFragment : Fragment() {
         refreshAdbx()
         AdbCar.onChange = { main.post { refreshAdbx(); refreshCarTab() } }
         root.addView(adbxStatus)
+        root.addView(MaterialButton(ctx).apply {
+            text = getString(R.string.adbx_direct); textSize = 18f; minHeight = ctx.dp(72)
+            setOnClickListener { showDirectDialog(ctx) { refreshAdbx() } }
+        }, lp())
         val adbxBtns = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL }
         adbxBtns.addView(MaterialButton(ctx).apply {
             text = getString(R.string.adbx_connect); textSize = 18f; minHeight = ctx.dp(64)
@@ -284,6 +288,22 @@ class SettingsFragment : Fragment() {
             col.addView(code)
         }
         return col to (port to code)
+    }
+
+    private fun showDirectDialog(ctx: android.content.Context, onDone: () -> Unit) {
+        val (view, fields) = portAndCodeView(ctx, false)
+        fields.first.setText("5555")
+        MaterialAlertDialogBuilder(ctx)
+            .setTitle(R.string.adbx_direct)
+            .setMessage(R.string.adbx_direct_msg)
+            .setView(view)
+            .setPositiveButton(R.string.adbx_direct) { _, _ ->
+                val port = fields.first.text.toString().trim().toIntOrNull() ?: 5555
+                AdbCar.connect(ctx.applicationContext, port, legacy = true)
+                main.postDelayed({ onDone() }, 600)
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     private fun showConnectDialog(ctx: android.content.Context, onDone: () -> Unit) {
