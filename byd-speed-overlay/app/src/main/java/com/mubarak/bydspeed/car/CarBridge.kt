@@ -152,6 +152,7 @@ object CarBridge {
         val perms = CarPermissions.status(context)
         append("BYD permissions granted: ${perms.count { it.granted }}/${perms.size}, ")
         append("protection: ${perms.groupingBy { it.protection }.eachCount()}\n")
+        append(CarPermissions.definitions(context))
 
         val ordered = devs.entries.sortedBy { e ->
             PRIORITY.indexOf(shortName(e.key).substringBefore('.')).let { if (it < 0) 99 else it }

@@ -131,6 +131,36 @@ object CarPermissions {
         return (listOf(base) + flags).joinToString("|")
     }
 
+    /** Scans every installed package for BYDAUTO permission definitions: package → (name, protection). */
+    fun definitions(context: android.content.Context): String = buildString {
+        val pm = context.packageManager
+        val pkgs = try {
+            @Suppress("DEPRECATION")
+            pm.getInstalledPackages(android.content.pm.PackageManager.GET_PERMISSIONS)
+        } catch (e: Exception) { emptyList() }
+        append("Visible packages: ${pkgs.size}\n")
+        var found = 0
+        for (pi in pkgs) {
+            val defs = pi.permissions?.filter { it.name.contains("BYDAUTO") }.orEmpty()
+            if (defs.isEmpty()) continue
+            found += defs.size
+            append("  ${pi.packageName} (system=${(pi.applicationInfo?.flags ?: 0) and android.content.pm.ApplicationInfo.FLAG_SYSTEM != 0}): ")
+            append(defs.groupBy { protectionLabel(it) }.entries.joinToString("; ") { (k, v) -> "$k×${v.size}" })
+            append('\n')
+            defs.filter { it.name.endsWith("AC_GET") || it.name.endsWith("AC_SET") || it.name.endsWith("SETTING_SET") }
+                .forEach { append("    ${it.name.removePrefix("android.permission.")} = ${protectionLabel(it)}\n") }
+        }
+        append("BYDAUTO permission definitions found: $found\n")
+        // Who holds them? (apps granted AC_SET hint at a whitelist / signature)
+        val holders = pkgs.filter { pi ->
+            pi.requestedPermissions?.withIndex()?.any { (i, n) ->
+                n == "android.permission.BYDAUTO_AC_SET" &&
+                    (pi.requestedPermissionsFlags?.getOrNull(i) ?: 0) and android.content.pm.PackageInfo.REQUESTED_PERMISSION_GRANTED != 0
+            } == true
+        }.map { it.packageName }
+        append("Apps granted BYDAUTO_AC_SET: ${holders.size}${if (holders.isNotEmpty()) " e.g. " + holders.take(8).joinToString(", ") else ""}\n")
+    }
+
     fun summary(list: List<Status>): String = buildString {
         val granted = list.count { it.granted }
         append("Permissions: ${granted}/${list.size} granted\n")
