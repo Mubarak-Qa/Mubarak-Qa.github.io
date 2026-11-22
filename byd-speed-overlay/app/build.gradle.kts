@@ -11,15 +11,15 @@ android {
         applicationId = "com.mubarak.bydspeed"
         minSdk = 26
         targetSdk = 34
-        versionCode = 5
-        versionName = "0.4.1"
+        versionCode = 6
+        versionName = "0.5.0"
         buildConfigField(
             "String", "UPDATE_URL",
             "\"https://mubarak-qa.github.io/byd-speed-overlay/version.json\""
         )
     }
 
-    buildFeatures { buildConfig = true }
+    buildFeatures { buildConfig = true; aidl = true }
 
     buildTypes {
         release {
@@ -43,4 +43,6 @@ dependencies {
     implementation("com.google.android.material:material:1.12.0")
     implementation("androidx.media3:media3-exoplayer:1.4.1")
     implementation("androidx.media3:media3-exoplayer-hls:1.4.1")
+    implementation("dev.rikka.shizuku:api:13.1.5")
+    implementation("dev.rikka.shizuku:provider:13.1.5")
 }

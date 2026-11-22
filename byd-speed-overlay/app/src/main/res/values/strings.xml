@@ -141,4 +141,14 @@
     <string name="perm_request">السماح بصلاحيات السيارة</string>
     <string name="perm_request_hint">نظام BYD يمنع التطبيق من قراءة السيارة والتحكم بها حتى تسمح له. اضغط الزر ووافق على الطلبات.</string>
     <string name="perm_system_only">نظام BYD يمنح هذه الصلاحيات لتطبيقات النظام فقط، ولا يمكن طلبها من هنا. افتح الإعدادات ← أدوات مطوّر السيارة ← فحص وأرسل النتيجة للمطوّر.</string>
+    <string name="shizuku_title">التحكم بالسيارة (Shizuku)</string>
+    <string name="shizuku_hint">للتحكم بالمكيف والمقاعد، يحتاج التطبيق صلاحية مستوى الشِّل عبر Shizuku. شغّل Shizuku في السيارة ثم اضغط ربط.</string>
+    <string name="shizuku_connect">ربط Shizuku</string>
+    <string name="shizuku_connect_hint">اضغط "ربط Shizuku" ووافق على الإذن لتعمل أزرار المكيف والمقاعد.</string>
+    <string name="shizuku_connected">متصل عبر Shizuku، التحكم بالسيارة مفعّل</string>
+    <string name="shizuku_not_running">Shizuku غير مشغّل. ثبّته وشغّله (ADB مفعّل عندك)، ثم ارجع.</string>
+    <string name="shizuku_no_perm">بانتظار الموافقة على إذن Shizuku.</string>
+    <string name="shizuku_binding">جارٍ الاتصال بخدمة السيارة…</string>
+    <string name="shizuku_old">إصدار Shizuku قديم، حدّثه.</string>
+    <string name="shizuku_error">تعذر الاتصال بـ Shizuku.</string>
 </resources>

@@ -30,6 +30,7 @@ import com.mubarak.bydspeed.R
 import com.mubarak.bydspeed.UpdateChecker
 import com.mubarak.bydspeed.car.CarBridge
 import com.mubarak.bydspeed.car.CarFeatures
+import com.mubarak.bydspeed.car.ShizukuCar
 import org.json.JSONObject
 import java.util.concurrent.Executors
 
@@ -69,6 +70,28 @@ class SettingsFragment : Fragment() {
             setOnClickListener { checkUpdates() }
         }, lp().apply { topMargin = ctx.dp(8) })
 
+        // Shizuku (shell-level car access)
+        root.addView(ctx.sectionTitle(getString(R.string.shizuku_title)))
+        val shizukuStatus = ctx.bodyText("", 18f)
+        fun refreshShizuku() {
+            shizukuStatus.text = when (ShizukuCar.status()) {
+                ShizukuCar.State.CONNECTED -> "✔ " + getString(R.string.shizuku_connected)
+                ShizukuCar.State.NO_SHIZUKU -> getString(R.string.shizuku_not_running)
+                ShizukuCar.State.OLD -> getString(R.string.shizuku_old)
+                ShizukuCar.State.NO_PERMISSION -> getString(R.string.shizuku_no_perm)
+                ShizukuCar.State.BINDING -> getString(R.string.shizuku_binding)
+                else -> getString(R.string.shizuku_error)
+            }
+        }
+        refreshShizuku()
+        root.addView(ctx.bodyText(getString(R.string.shizuku_hint), 15f).apply { alpha = 0.75f })
+        root.addView(shizukuStatus.apply { setPadding(0, ctx.dp(8), 0, ctx.dp(8)) })
+        root.addView(MaterialButton(ctx).apply {
+            text = getString(R.string.shizuku_connect); textSize = 20f; minHeight = ctx.dp(72)
+            setOnClickListener { ShizukuCar.connect(); main.postDelayed({ refreshShizuku(); refreshCarTab() }, 800) }
+        }, lp())
+        ShizukuCar.onChange = { main.post { refreshShizuku(); refreshCarTab() } }
+
         // Car developer tools
         root.addView(ctx.sectionTitle(getString(R.string.set_dev)))
         root.addView(ctx.bodyText(getString(R.string.set_dev_hint), 16f).apply { alpha = 0.75f })
@@ -84,7 +107,8 @@ class SettingsFragment : Fragment() {
             setOnClickListener {
                 report.text = getString(R.string.car_loading)
                 io.execute {
-                    val r = runCatching { CarBridge.scanReport(ctx.applicationContext) }.getOrElse { it.toString() }
+                    val r = ShizukuCar.scan()
+                        ?: runCatching { CarBridge.scanReport(ctx.applicationContext) }.getOrElse { it.toString() }
                     main.post {
                         if (!isAdded) return@post
                         report.text = r

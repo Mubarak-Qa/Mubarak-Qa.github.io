@@ -38,7 +38,7 @@ object CarBridge {
             try {
                 val cls = Class.forName(name)
                 val inst = cls.getMethod("getInstance", Context::class.java)
-                    .invoke(null, context.applicationContext)
+                    .invoke(null, (context.applicationContext ?: context))
                 if (inst != null) found[name] = inst
             } catch (t: Throwable) {
                 errors[name] = describe(t)

@@ -1,6 +1,6 @@
 {
-  "versionCode": 5,
-  "versionName": "0.4.1",
-  "apkUrl": "https://mubarak-qa.github.io/byd-speed-overlay/dist/BydCarHub-0.4.1.apk",
-  "notes": "فحص يكشف مصدر صلاحيات BYD ونوعها."
+  "versionCode": 6,
+  "versionName": "0.5.0",
+  "apkUrl": "https://mubarak-qa.github.io/byd-speed-overlay/dist/BydCarHub-0.5.0.apk",
+  "notes": "دعم Shizuku: التحكم بالمكيف والمقاعد عبر هوية الشِّل مثل OneHub. اربط Shizuku من الرئيسية أو الإعدادات."
 }

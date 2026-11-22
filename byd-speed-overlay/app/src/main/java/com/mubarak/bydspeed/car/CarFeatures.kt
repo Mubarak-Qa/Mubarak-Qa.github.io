@@ -53,54 +53,58 @@ data class Feature(
 )
 
 class Binding(
-    private val getter: Pair<Any, Method>?,
-    private val getArgs: List<Number>,
-    private val setter: Pair<Any, Method>?,
-    private val setArgs: List<Any>,
-    private val onM: Pair<Any, Method>?,
-    private val onArgs: List<Number>,
-    private val offM: Pair<Any, Method>?,
-    private val offArgs: List<Number>,
-    private val zeroM: Pair<Any, Method>?,
-    private val zeroArgs: List<Number>,
+    private val cls: String?,
+    private val getMethods: List<String>,
+    private val getArgs: List<Int>,
+    private val localGetter: Pair<Any, Method>?,
+    private val setMethod: String?,
+    private val setArgsSpec: List<Any>,
+    private val localSetter: Pair<Any, Method>?,
+    private val onMethod: String?, private val onArgs: List<Int>, private val localOn: Pair<Any, Method>?,
+    private val offMethod: String?, private val offArgs: List<Int>, private val localOff: Pair<Any, Method>?,
+    private val zeroMethod: String?, private val zeroArgs: List<Int>,
     private val offset: Int,
     private val scale: Double,
     val labels: Map<String, String>,
 ) {
-    val canRead get() = getter != null
-    val canWrite get() = setter != null || (onM != null && offM != null)
+    val canRead get() = localGetter != null || (ShizukuCar.connected && getMethods.isNotEmpty())
+    val canWrite get() = (setMethod != null && (localSetter != null || ShizukuCar.connected)) ||
+        (onMethod != null && offMethod != null && (localOn != null || ShizukuCar.connected))
 
-    /** UI value, or null when unavailable (BYD returns sentinel codes on failure). */
-    fun read(): Double? = try {
-        getter?.let { (o, m) ->
-            val raw = (CarBridge.invoke(o, m, getArgs) as? Number)?.toDouble() ?: return null
-            if (raw <= -2147482000.0 || raw == 65535.0) null else raw * scale - offset
+    /** UI value, or null when unavailable. Reads via Shizuku (shell UID) when connected. */
+    fun read(): Double? {
+        val raw = if (ShizukuCar.connected) ShizukuCar.get(cls, getMethods, getArgs)
+        else localGetter?.let { (o, m) ->
+            try { (CarBridge.invoke(o, m, getArgs.map { it as Number }) as? Number)?.toDouble() } catch (t: Throwable) { null }
         }
-    } catch (t: Throwable) { null }
+        raw ?: return null
+        return if (raw <= -2147482000.0 || raw == 65535.0) null else raw * scale - offset
+    }
 
-    /** Returns null on success, or an error message. */
+    /** Returns null on success, or an error message. Writes via Shizuku when connected. */
     fun write(value: Int): String? {
+        val (name, args) = when {
+            value == 0 && zeroMethod != null -> zeroMethod to zeroArgs.map { it.toDouble() }
+            onMethod != null && offMethod != null && setMethod == null ->
+                if (value != 0) onMethod to onArgs.map { it.toDouble() } else offMethod to offArgs.map { it.toDouble() }
+            setMethod != null -> setMethod to setArgsSpec.map { if (it == "v") (value + offset).toDouble() else (it as Number).toDouble() }
+            else -> return "unsupported"
+        }
+        if (ShizukuCar.connected) return ShizukuCar.set(cls, name, args)
+        // Local fallback (will usually fail with "permission deny" until Shizuku is connected).
+        val p = CarBridge.find(localAppContext ?: return "no-context", cls, name, args.size) ?: return "missing $name"
         return try {
-            val result = when {
-                value == 0 && zeroM != null -> CarBridge.invoke(zeroM.first, zeroM.second, zeroArgs)
-                onM != null && offM != null && setter == null -> {
-                    val (o, m) = if (value != 0) onM else offM
-                    CarBridge.invoke(o, m, if (value != 0) onArgs else offArgs)
-                }
-                else -> {
-                    val (o, m) = setter ?: return "unsupported"
-                    CarBridge.invoke(o, m, setArgs.map { if (it == "v") value + offset else (it as Number) })
-                }
-            }
-            // BYD setters return negative command codes on failure (e.g. -2147482648).
-            if (result is Int && result < 0) "code $result" else null
+            val r = CarBridge.invoke(p.first, p.second, args.map { it as Number })
+            if (r is Int && r < 0) "code $r" else null
         } catch (t: Throwable) { CarBridge.describe(t) }
     }
 
-    override fun toString() = buildString {
-        append("get=").append(getter?.second?.name ?: "—")
-        append(" set=").append(setter?.second?.name
-            ?: listOfNotNull(onM?.second?.name, offM?.second?.name).joinToString("/").ifEmpty { "—" })
+    companion object { var localAppContext: android.content.Context? = null }
+
+    override fun toString(): String = buildString {
+        append("get=").append(getMethods.firstOrNull() ?: "—").append(if (localGetter != null) "✓" else "·")
+        append(" set=").append(setMethod ?: listOfNotNull(onMethod, offMethod).joinToString("/").ifEmpty { "—" })
+        append(if (localSetter != null || localOn != null) "✓" else "·")
     }
 }
 
@@ -189,38 +193,37 @@ object CarFeatures {
         runCatching { JSONObject(Prefs(context).carMapping) }.getOrElse { JSONObject() }
 
     fun bind(context: Context, f: Feature): Binding = cache.getOrPut(f.id) {
+        Binding.localAppContext = context.applicationContext ?: context
         val o = overrides(context).optJSONObject(f.id)
         val cls = o?.optString("cls")?.ifEmpty { null } ?: f.cls
 
-        fun nums(a: JSONArray?) = a?.let { arr -> (0 until arr.length()).map { arr.optDouble(it) as Number } }
+        fun ints(a: JSONArray?) = a?.let { arr -> (0 until arr.length()).map { arr.optInt(it) } }
         fun anys(a: JSONArray?) = a?.let { arr -> (0 until arr.length()).map { i ->
             arr.get(i).let { v -> if (v == "v") "v" else (v as Number) } } }
 
-        val getArgs = nums(o?.optJSONArray("getArgs")) ?: f.getArgs
+        val getArgs = ints(o?.optJSONArray("getArgs")) ?: f.getArgs
         val setArgs = anys(o?.optJSONArray("setArgs")) ?: f.setArgs
         val getNames = o?.optString("get")?.ifEmpty { null }?.let(::listOf) ?: f.get
         val setName = o?.optString("set")?.ifEmpty { null } ?: f.set
+        val onName = o?.optString("on")?.ifEmpty { null } ?: f.on
+        val offName = o?.optString("off")?.ifEmpty { null } ?: f.off
+        val onArgs = ints(o?.optJSONArray("onArgs")) ?: f.onArgs
+        val offArgs = ints(o?.optJSONArray("offArgs")) ?: f.offArgs
 
-        val getter = getNames.firstNotNullOfOrNull { CarBridge.find(context, cls, it, getArgs.size) }
-            ?: getNames.firstNotNullOfOrNull { CarBridge.find(context, null, it, getArgs.size) }
-            ?: if (o?.has("get") != true && f.getKeywords.isNotEmpty())
-                CarBridge.findByKeywords(context, "get", f.getKeywords, getArgs.size) else null
-        val setter = if (f.kind == Kind.READ) null else setName?.let { CarBridge.find(context, cls, it, setArgs.size) }
-
-        val onArgs = nums(o?.optJSONArray("onArgs")) ?: f.onArgs
-        val offArgs = nums(o?.optJSONArray("offArgs")) ?: f.offArgs
-        val onM = (o?.optString("on")?.ifEmpty { null } ?: f.on)?.let { CarBridge.find(context, cls, it, onArgs.size) }
-        val offM = (o?.optString("off")?.ifEmpty { null } ?: f.off)?.let { CarBridge.find(context, cls, it, offArgs.size) }
-        val zeroM = f.zeroSet?.let { CarBridge.find(context, cls, it, f.zeroArgs.size) }
+        fun resolve(name: String?, n: Int) = name?.let { CarBridge.find(context, cls, it, n) ?: CarBridge.find(context, null, it, n) }
+        val localGetter = getNames.firstNotNullOfOrNull { resolve(it, getArgs.size) }
+            ?: if (f.getKeywords.isNotEmpty()) CarBridge.findByKeywords(context, "get", f.getKeywords, getArgs.size) else null
+        val localSetter = if (f.kind == Kind.READ) null else resolve(setName, setArgs.size)
+        val localOn = resolve(onName, onArgs.size)
+        val localOff = resolve(offName, offArgs.size)
 
         val labels = mutableMapOf<String, String>()
         o?.optJSONObject("labels")?.let { l -> l.keys().forEach { k -> labels[k] = l.getString(k) } }
-        if (f.id == "gear" && labels.isEmpty()) {
-            // GEARBOX_AUTO_MODE_P=1, R=2, N=3, D=4, M=5, S=6
+        if (f.id == "gear" && labels.isEmpty())
             labels.putAll(mapOf("1" to "P", "2" to "R", "3" to "N", "4" to "D", "5" to "M", "6" to "S"))
-        }
 
-        Binding(getter, getArgs, setter, setArgs, onM, onArgs, offM, offArgs, zeroM, f.zeroArgs,
+        Binding(cls, getNames, getArgs, localGetter, setName, setArgs, localSetter,
+            onName, onArgs, localOn, offName, offArgs, localOff, f.zeroSet, f.zeroArgs,
             o?.optInt("offset", f.offset) ?: f.offset, o?.optDouble("scale", 1.0) ?: 1.0, labels)
     }
 

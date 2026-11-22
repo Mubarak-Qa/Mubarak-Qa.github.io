@@ -21,7 +21,7 @@ import com.mubarak.bydspeed.R
 import com.mubarak.bydspeed.car.Binding
 import com.mubarak.bydspeed.car.CarBridge
 import com.mubarak.bydspeed.car.CarFeatures
-import com.mubarak.bydspeed.car.CarPermissions
+import com.mubarak.bydspeed.car.ShizukuCar
 import androidx.activity.result.contract.ActivityResultContracts
 import com.mubarak.bydspeed.car.Feature
 import com.mubarak.bydspeed.car.Kind
@@ -73,21 +73,31 @@ class CarFragment : Fragment() {
             }, lp())
         }
 
-        val perms = CarPermissions.status(ctx)
-        val granted = perms.count { it.granted }
-        if (CarBridge.isAvailable && granted < perms.size) {
-            val requestable = perms.filter { it.requestable && !it.granted }
+        val state = ShizukuCar.status()
+        if (CarBridge.isAvailable && state != ShizukuCar.State.CONNECTED) {
+            val msg = when (state) {
+                ShizukuCar.State.NO_SHIZUKU -> getString(R.string.shizuku_not_running)
+                ShizukuCar.State.OLD -> getString(R.string.shizuku_old)
+                ShizukuCar.State.NO_PERMISSION, ShizukuCar.State.BINDING -> getString(R.string.shizuku_connect_hint)
+                else -> getString(R.string.shizuku_error)
+            }
             val col = vertical(ctx, ctx.dp(20)).apply {
-                addView(ctx.bodyText(getString(R.string.perm_title, granted, perms.size), 22f))
-                addView(ctx.bodyText(getString(if (requestable.isNotEmpty()) R.string.perm_request_hint else R.string.perm_system_only), 16f)
-                    .apply { alpha = 0.8f; setPadding(0, ctx.dp(6), 0, ctx.dp(6)) })
-                if (requestable.isNotEmpty()) addView(MaterialButton(ctx).apply {
-                    text = getString(R.string.perm_request); textSize = 20f; minHeight = ctx.dp(72)
-                    setOnClickListener { permLauncher.launch(requestable.map { it.name }.toTypedArray()) }
+                addView(ctx.bodyText(getString(R.string.shizuku_title), 22f))
+                addView(ctx.bodyText(msg, 16f).apply { alpha = 0.85f; setPadding(0, ctx.dp(6), 0, ctx.dp(6)) })
+                addView(MaterialButton(ctx).apply {
+                    text = getString(R.string.shizuku_connect); textSize = 20f; minHeight = ctx.dp(72)
+                    setOnClickListener { ShizukuCar.connect(); rebuild() }
                 })
             }
             content.addView(MaterialCardView(ctx).apply {
                 setCardBackgroundColor(0x33FFA000); radius = ctx.dp(20).toFloat(); addView(col)
+            }, lp())
+        } else if (state == ShizukuCar.State.CONNECTED) {
+            content.addView(MaterialCardView(ctx).apply {
+                setCardBackgroundColor(0x3343A047); radius = ctx.dp(20).toFloat()
+                addView(ctx.bodyText("✔ " + getString(R.string.shizuku_connected), 18f).apply {
+                    setPadding(ctx.dp(20), ctx.dp(14), ctx.dp(20), ctx.dp(14))
+                })
             }, lp())
         }
 
@@ -131,7 +141,7 @@ class CarFragment : Fragment() {
             ).apply { width = 0; setMargins(ctx.dp(6), ctx.dp(6), ctx.dp(6), ctx.dp(6)) }
             alpha = if (b.canRead) 1f else 0.45f
         }
-        refreshers += { value.text = format(f, b, b.read()) }
+        refreshers += { val v = b.read(); handler.post { value.text = format(f, b, v) } }
         return card
     }
 
@@ -163,7 +173,9 @@ class CarFragment : Fragment() {
                 }
                 row.addView(sw)
                 refreshers += {
-                    if (SystemClock.uptimeMillis() - lastTouch > 2000) b.read()?.let { sw.isChecked = it != 0.0 }
+                    if (SystemClock.uptimeMillis() - lastTouch > 2000) {
+                        val v = b.read(); handler.post { v?.let { sw.isChecked = it != 0.0 } }
+                    }
                 }
             }
             Kind.LEVEL -> {
@@ -190,7 +202,7 @@ class CarFragment : Fragment() {
                     if (SystemClock.uptimeMillis() - lastTouch > 2000) {
                         val v = b.read()
                         if (v != null) current = v.roundToInt().coerceIn(f.min, f.max)
-                        value.text = format(f, b, v)
+                        handler.post { value.text = format(f, b, v) }
                     }
                 }
             }
@@ -201,8 +213,10 @@ class CarFragment : Fragment() {
 
     private val tick = object : Runnable {
         override fun run() {
-            refreshers.forEach { runCatching(it) }
-            handler.postDelayed(this, 1000)
+            io.execute {
+                refreshers.forEach { runCatching(it) }
+                handler.postDelayed(this, 1200)
+            }
         }
     }
 

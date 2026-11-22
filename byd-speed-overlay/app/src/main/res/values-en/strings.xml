@@ -141,4 +141,14 @@
     <string name="perm_request">Allow car permissions</string>
     <string name="perm_request_hint">The BYD system blocks reading and controlling the car until you allow it. Tap the button and accept.</string>
     <string name="perm_system_only">The BYD system only grants these permissions to system apps, so they can\'t be requested here. Run Settings → Car developer tools → Scan and send it to the developer.</string>
+    <string name="shizuku_title">Car control (Shizuku)</string>
+    <string name="shizuku_hint">To control the A/C and seats, the app needs shell-level access via Shizuku. Start Shizuku in the car, then tap Connect.</string>
+    <string name="shizuku_connect">Connect Shizuku</string>
+    <string name="shizuku_connect_hint">Tap "Connect Shizuku" and grant the permission so the A/C and seat controls work.</string>
+    <string name="shizuku_connected">Connected via Shizuku, car control enabled</string>
+    <string name="shizuku_not_running">Shizuku is not running. Install and start it (your ADB is on), then return.</string>
+    <string name="shizuku_no_perm">Waiting for Shizuku permission approval.</string>
+    <string name="shizuku_binding">Connecting to the car service…</string>
+    <string name="shizuku_old">Shizuku version is too old, update it.</string>
+    <string name="shizuku_error">Could not connect to Shizuku.</string>
 </resources>
