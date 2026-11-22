@@ -9,15 +9,21 @@ import java.lang.reflect.Method
 
 enum class Kind { READ, TOGGLE, LEVEL }
 
+private const val AC = "android.hardware.bydauto.ac.BYDAutoAcDevice"
+private const val SETTING = "android.hardware.bydauto.setting.BYDAutoSettingDevice"
+private const val STAT = "android.hardware.bydauto.statistic.BYDAutoStatisticDevice"
+
 /**
- * A car indicator or control. Default method names / keywords / args are best guesses
- * (unverified on the Leopard 8). Any of them can be replaced at runtime by a JSON override
- * saved in Settings → Car developer tools, keyed by [id]:
+ * A car indicator or control, mapped to methods confirmed by the Leopard 8 scan (DiLink 5.1).
+ * Argument order for multi-arg setters is inferred from the framework's constants and may need
+ * adjusting; any field can be overridden at runtime with JSON keyed by [id]:
  *
- *   {"ac_temp_driver": {"cls":"android.hardware.bydauto.ac.BYDAutoAcDevice",
- *     "get":"getTemprature","getArgs":[1], "set":"setAcTemperature","setArgs":[1,"v"],
- *     "on":"start","onArgs":[0], "off":"stop","offArgs":[0], "scale":1,
- *     "labels":{"1":"P","2":"R"}}}
+ *   {"ac_temp_driver": {"cls":"…AcDevice", "get":"getTemprature","getArgs":[1],
+ *     "set":"setAcTemperature","setArgs":[1,"v",0,1], "on":"start","onArgs":[0],
+ *     "off":"stop","offArgs":[0], "offset":0, "scale":1, "labels":{"1":"P"}}}
+ *
+ * Setters are only ever bound by exact name — never by keyword — so a guess can't
+ * accidentally hit an unrelated car function.
  */
 data class Feature(
     val id: String,
@@ -26,15 +32,24 @@ data class Feature(
     val unit: String = "",
     val min: Int = 0,
     val max: Int = 1,
+    val cls: String? = null,
     val get: List<String> = emptyList(),
     val getArgs: List<Int> = emptyList(),
     val getKeywords: List<String> = emptyList(),
-    val set: List<String> = emptyList(),
-    /** Setter args; the string "v" is replaced with the new value. */
+    val set: String? = null,
+    /** Setter args; the string "v" is replaced with the device value. */
     val setArgs: List<Any> = listOf("v"),
-    val setKeywords: List<String> = emptyList(),
     val on: String? = null,
+    val onArgs: List<Int> = emptyList(),
     val off: String? = null,
+    val offArgs: List<Int> = emptyList(),
+    /** device value = UI value + offset (BYD seat levels use 1 = off). */
+    val offset: Int = 0,
+    /** Alternate setter used when the UI value is 0 (e.g. massage off is a mode, not a level). */
+    val zeroSet: String? = null,
+    val zeroArgs: List<Int> = emptyList(),
+    /** String resources naming each UI level, index = UI value. */
+    val levelLabels: List<Int> = emptyList(),
 )
 
 class Binding(
@@ -46,93 +61,123 @@ class Binding(
     private val onArgs: List<Number>,
     private val offM: Pair<Any, Method>?,
     private val offArgs: List<Number>,
+    private val zeroM: Pair<Any, Method>?,
+    private val zeroArgs: List<Number>,
+    private val offset: Int,
     private val scale: Double,
     val labels: Map<String, String>,
 ) {
     val canRead get() = getter != null
     val canWrite get() = setter != null || (onM != null && offM != null)
 
+    /** UI value, or null when unavailable (BYD returns sentinel codes on failure). */
     fun read(): Double? = try {
-        getter?.let { (o, m) -> (CarBridge.invoke(o, m, getArgs) as? Number)?.toDouble()?.times(scale) }
+        getter?.let { (o, m) ->
+            val raw = (CarBridge.invoke(o, m, getArgs) as? Number)?.toDouble() ?: return null
+            if (raw <= -2147482000.0 || raw == 65535.0) null else raw * scale - offset
+        }
     } catch (t: Throwable) { null }
 
     /** Returns null on success, or an error message. */
     fun write(value: Int): String? {
         return try {
-            if (onM != null && offM != null && setter == null) {
-                val (o, m) = if (value != 0) onM else offM
-                CarBridge.invoke(o, m, if (value != 0) onArgs else offArgs)
-            } else {
-                val (o, m) = setter ?: return "unsupported"
-                val args = setArgs.map { if (it == "v") value else (it as Number) }
-                CarBridge.invoke(o, m, args)
+            val result = when {
+                value == 0 && zeroM != null -> CarBridge.invoke(zeroM.first, zeroM.second, zeroArgs)
+                onM != null && offM != null && setter == null -> {
+                    val (o, m) = if (value != 0) onM else offM
+                    CarBridge.invoke(o, m, if (value != 0) onArgs else offArgs)
+                }
+                else -> {
+                    val (o, m) = setter ?: return "unsupported"
+                    CarBridge.invoke(o, m, setArgs.map { if (it == "v") value + offset else (it as Number) })
+                }
             }
-            null
+            // BYD setters return negative command codes on failure (e.g. -2147482648).
+            if (result is Int && result < 0) "code $result" else null
         } catch (t: Throwable) { CarBridge.describe(t) }
     }
 
     override fun toString() = buildString {
         append("get=").append(getter?.second?.name ?: "—")
-        append(" set=").append(setter?.second?.name ?: listOfNotNull(onM?.second?.name, offM?.second?.name).joinToString("/").ifEmpty { "—" })
+        append(" set=").append(setter?.second?.name
+            ?: listOfNotNull(onM?.second?.name, offM?.second?.name).joinToString("/").ifEmpty { "—" })
     }
 }
 
 object CarFeatures {
-    private val seatAreas = mapOf("driver" to 1, "passenger" to 2)
+    private val offLowHigh = listOf(R.string.lvl_off, R.string.lvl_low, R.string.lvl_high)
+    private val massageLevels = listOf(R.string.lvl_off, R.string.lvl_1, R.string.lvl_2, R.string.lvl_3)
 
     val indicators = listOf(
-        Feature("speed", R.string.ind_speed, Kind.READ, "km/h", get = listOf("getCurrentSpeed")),
-        Feature("battery", R.string.ind_battery, Kind.READ, "%", get = listOf("getElecPercentageValue"), getKeywords = listOf("Elec", "Percent")),
-        Feature("fuel", R.string.ind_fuel, Kind.READ, "%", get = listOf("getFuelPercentageValue"), getKeywords = listOf("Fuel", "Percent")),
-        Feature("range_ev", R.string.ind_range_ev, Kind.READ, "km", get = listOf("getElecDrivingRangeValue"), getKeywords = listOf("Elec", "Range")),
-        Feature("range_fuel", R.string.ind_range_fuel, Kind.READ, "km", get = listOf("getFuelDrivingRangeValue"), getKeywords = listOf("Fuel", "Range")),
-        Feature("odometer", R.string.ind_odometer, Kind.READ, "km", get = listOf("getTotalMileageValue"), getKeywords = listOf("Total", "Mileage")),
-        Feature("gear", R.string.ind_gear, Kind.READ, get = listOf("getGearboxAutoModeType"), getKeywords = listOf("Gear")),
-        Feature("temp_out", R.string.ind_temp_out, Kind.READ, "°C", get = listOf("getTemperatureSensorValue"), getKeywords = listOf("Out", "Temp")),
+        Feature("speed", R.string.ind_speed, Kind.READ, "km/h", get = listOf("getWheelSpeed")),
+        Feature("battery", R.string.ind_battery, Kind.READ, "%", cls = STAT, get = listOf("getElecPercentageValue", "getSOCBatteryPercentage")),
+        Feature("fuel", R.string.ind_fuel, Kind.READ, "%", cls = STAT, get = listOf("getFuelPercentageValue")),
+        Feature("range_ev", R.string.ind_range_ev, Kind.READ, "km", cls = STAT, get = listOf("getElecDrivingRangeValue")),
+        Feature("range_fuel", R.string.ind_range_fuel, Kind.READ, "km", cls = STAT, get = listOf("getFuelDrivingRangeValue")),
+        Feature("odometer", R.string.ind_odometer, Kind.READ, "km", get = listOf("getTotalMileageValue", "getTotalMileage")),
+        Feature("gear", R.string.ind_gear, Kind.READ, get = listOf("getGearboxAutoModeType")),
+        Feature("temp_out", R.string.ind_temp_out, Kind.READ, "°C", cls = AC, get = listOf("getTemprature"), getArgs = listOf(4)),
         Feature("temp_in", R.string.ind_temp_in, Kind.READ, "°C", getKeywords = listOf("Inside", "Temp")),
     ) + listOf(
         "fl" to R.string.ind_tyre_fl, "fr" to R.string.ind_tyre_fr,
         "rl" to R.string.ind_tyre_rl, "rr" to R.string.ind_tyre_rr,
     ).mapIndexed { i, (k, label) ->
-        Feature("tyre_$k", label, Kind.READ, "kPa", get = listOf("getTyrePressureValue"),
-            getArgs = listOf(i + 1), getKeywords = listOf("Tyre", "Pressure"))
+        Feature("tyre_$k", label, Kind.READ, "kPa", get = listOf("getTyrePressureValue"), getArgs = listOf(i + 1))
     }
 
     val frontAc = listOf(
-        Feature("ac_power", R.string.ac_power, Kind.TOGGLE, get = listOf("getAcStartState"), on = "start", off = "stop"),
-        Feature("ac_temp_driver", R.string.ac_temp_driver, Kind.LEVEL, "°C", 17, 32,
-            get = listOf("getTemprature", "getTemperature"), getArgs = listOf(1),
-            set = listOf("setAcTemperature"), setArgs = listOf(1, "v")),
-        Feature("ac_temp_passenger", R.string.ac_temp_passenger, Kind.LEVEL, "°C", 17, 32,
-            get = listOf("getTemprature", "getTemperature"), getArgs = listOf(2),
-            set = listOf("setAcTemperature"), setArgs = listOf(2, "v")),
-        Feature("ac_fan", R.string.ac_fan, Kind.LEVEL, "", 0, 7,
-            get = listOf("getAcWindLevel"), set = listOf("setAcWindLevel"), setArgs = listOf("v")),
+        // start/stop(int source): AC_CTRL_SOURCE_UI_KEY = 0
+        Feature("ac_power", R.string.ac_power, Kind.TOGGLE, cls = AC, get = listOf("getAcStartState"),
+            on = "start", onArgs = listOf(0), off = "stop", offArgs = listOf(0)),
+        // setAcTemperature(area, value, source, unit): MAIN=1, DEPUTY=2, REAR=3; UI_KEY=0; °C=1
+        Feature("ac_temp_driver", R.string.ac_temp_driver, Kind.LEVEL, "°C", 17, 33, cls = AC,
+            get = listOf("getTemprature"), getArgs = listOf(1), set = "setAcTemperature", setArgs = listOf(1, "v", 0, 1)),
+        Feature("ac_temp_passenger", R.string.ac_temp_passenger, Kind.LEVEL, "°C", 17, 33, cls = AC,
+            get = listOf("getTemprature"), getArgs = listOf(2), set = "setAcTemperature", setArgs = listOf(2, "v", 0, 1)),
+        // setAcWindLevel(source, level): levels 0..7
+        Feature("ac_fan", R.string.ac_fan, Kind.LEVEL, "", 0, 7, cls = AC,
+            get = listOf("getAcWindLevel"), set = "setAcWindLevel", setArgs = listOf(0, "v")),
     )
 
     val rearAc = listOf(
-        Feature("rear_power", R.string.rear_power, Kind.TOGGLE,
-            getKeywords = listOf("Rear", "State"), setKeywords = listOf("Rear", "Switch")),
-        Feature("rear_temp", R.string.rear_temp, Kind.LEVEL, "°C", 17, 32,
-            getKeywords = listOf("Rear", "Temp"), setKeywords = listOf("Rear", "Temp")),
-        Feature("rear_fan", R.string.rear_fan, Kind.LEVEL, "", 0, 7,
-            getKeywords = listOf("Rear", "Wind"), setKeywords = listOf("Rear", "Wind")),
+        Feature("rear_power", R.string.rear_power, Kind.TOGGLE, cls = AC, get = listOf("getRearAcStartState"),
+            on = "startRearAc", onArgs = listOf(0), off = "stopRearAc", offArgs = listOf(0)),
+        Feature("rear_temp", R.string.rear_temp, Kind.LEVEL, "°C", 17, 33, cls = AC,
+            get = listOf("getTemprature"), getArgs = listOf(3), set = "setAcTemperature", setArgs = listOf(3, "v", 0, 1)),
+        Feature("rear_fan", R.string.rear_fan, Kind.LEVEL, "", 0, 7, cls = AC,
+            get = listOf("getRearAcWindLevel"), set = "setRearAcWindLevel", setArgs = listOf(0, "v")),
     )
 
-    val seats = seatAreas.flatMap { (who, area) ->
-        val d = who == "driver"
-        listOf(
-            Feature("seat_heat_$who", if (d) R.string.seat_heat_driver else R.string.seat_heat_passenger, Kind.LEVEL, "", 0, 3,
-                getArgs = listOf(area), getKeywords = listOf("Seat", "Heat"),
-                setArgs = listOf(area, "v"), setKeywords = listOf("Seat", "Heat")),
-            Feature("seat_vent_$who", if (d) R.string.seat_vent_driver else R.string.seat_vent_passenger, Kind.LEVEL, "", 0, 3,
-                getArgs = listOf(area), getKeywords = listOf("Seat", "Ventil"),
-                setArgs = listOf(area, "v"), setKeywords = listOf("Seat", "Ventil")),
-            Feature("seat_massage_$who", if (d) R.string.seat_massage_driver else R.string.seat_massage_passenger, Kind.LEVEL, "", 0, 3,
-                getArgs = listOf(area), getKeywords = listOf("Massage"),
-                setArgs = listOf(area, "v"), setKeywords = listOf("Massage")),
+    /** Seat codes: DRIVER_SEAT=1, PASSENGER_SEAT=2, REAR_LEFT_SEAT=3, REAR_RIGHT_SEAT=4. */
+    private val seatIds = listOf(
+        Triple("driver", 1, listOf(R.string.seat_heat_driver, R.string.seat_vent_driver, R.string.seat_massage_driver)),
+        Triple("passenger", 2, listOf(R.string.seat_heat_passenger, R.string.seat_vent_passenger, R.string.seat_massage_passenger)),
+        Triple("rear_left", 3, listOf(R.string.seat_heat_rl, R.string.seat_vent_rl, 0)),
+        Triple("rear_right", 4, listOf(R.string.seat_heat_rr, R.string.seat_vent_rr, 0)),
+    )
+
+    val seats = seatIds.flatMap { (who, seat, labels) ->
+        listOfNotNull(
+            // Heating/ventilating: OFF=1, LOW=2, HIGH=3 → UI 0..2 with offset 1
+            Feature("seat_heat_$who", labels[0], Kind.LEVEL, "", 0, 2, cls = SETTING,
+                get = listOf("getSeatHeatingState"), getArgs = listOf(seat),
+                set = "setSeatHeatingState", setArgs = listOf(seat, "v"), offset = 1, levelLabels = offLowHigh),
+            Feature("seat_vent_$who", labels[1], Kind.LEVEL, "", 0, 2, cls = SETTING,
+                get = listOf("getSeatVentilatingState"), getArgs = listOf(seat),
+                set = "setSeatVentilatingState", setArgs = listOf(seat, "v"), offset = 1, levelLabels = offLowHigh),
+            // Massage: intensity 1..3; off = setMassageMode(seat, MASSAGE_MODE_CLOSE=1)
+            if (labels[2] == 0) null else
+                Feature("seat_massage_$who", labels[2], Kind.LEVEL, "", 0, 3, cls = SETTING,
+                    get = listOf("getMassageLevel"), getArgs = listOf(seat),
+                    set = "setMassageLevel", setArgs = listOf(seat, "v"),
+                    zeroSet = "setMassageMode", zeroArgs = listOf(seat, 1), levelLabels = massageLevels),
         )
-    }
+    } + listOf(
+        // STEERING_WHEEL_HEATING_OFF=1, ON=2
+        Feature("steering_heat", R.string.steering_heat, Kind.TOGGLE, cls = SETTING,
+            get = listOf("getSteeringWheelHeatingState"), set = "setSteeringWheelHeatingState",
+            setArgs = listOf("v"), offset = 1),
+    )
 
     val all = indicators + frontAc + rearAc + seats
 
@@ -145,37 +190,38 @@ object CarFeatures {
 
     fun bind(context: Context, f: Feature): Binding = cache.getOrPut(f.id) {
         val o = overrides(context).optJSONObject(f.id)
-        val cls = o?.optString("cls")?.ifEmpty { null }
+        val cls = o?.optString("cls")?.ifEmpty { null } ?: f.cls
 
-        fun ints(a: JSONArray?) = a?.let { arr -> (0 until arr.length()).map { arr.optDouble(it) as Number } }
+        fun nums(a: JSONArray?) = a?.let { arr -> (0 until arr.length()).map { arr.optDouble(it) as Number } }
         fun anys(a: JSONArray?) = a?.let { arr -> (0 until arr.length()).map { i ->
             arr.get(i).let { v -> if (v == "v") "v" else (v as Number) } } }
 
-        val getArgs = ints(o?.optJSONArray("getArgs")) ?: f.getArgs
+        val getArgs = nums(o?.optJSONArray("getArgs")) ?: f.getArgs
         val setArgs = anys(o?.optJSONArray("setArgs")) ?: f.setArgs
         val getNames = o?.optString("get")?.ifEmpty { null }?.let(::listOf) ?: f.get
-        val setNames = o?.optString("set")?.ifEmpty { null }?.let(::listOf) ?: f.set
+        val setName = o?.optString("set")?.ifEmpty { null } ?: f.set
 
         val getter = getNames.firstNotNullOfOrNull { CarBridge.find(context, cls, it, getArgs.size) }
+            ?: getNames.firstNotNullOfOrNull { CarBridge.find(context, null, it, getArgs.size) }
             ?: if (o?.has("get") != true && f.getKeywords.isNotEmpty())
                 CarBridge.findByKeywords(context, "get", f.getKeywords, getArgs.size) else null
-        val setter = if (f.kind == Kind.READ) null else
-            setNames.firstNotNullOfOrNull { CarBridge.find(context, cls, it, setArgs.size) }
-                ?: if (o?.has("set") != true && f.setKeywords.isNotEmpty())
-                    CarBridge.findByKeywords(context, "set", f.setKeywords, setArgs.size) else null
+        val setter = if (f.kind == Kind.READ) null else setName?.let { CarBridge.find(context, cls, it, setArgs.size) }
 
-        val onName = o?.optString("on")?.ifEmpty { null } ?: f.on
-        val offName = o?.optString("off")?.ifEmpty { null } ?: f.off
-        val onArgs = ints(o?.optJSONArray("onArgs")) ?: emptyList()
-        val offArgs = ints(o?.optJSONArray("offArgs")) ?: emptyList()
-        val onM = onName?.let { CarBridge.find(context, cls, it, onArgs.size) ?: CarBridge.find(context, cls, it) }
-        val offM = offName?.let { CarBridge.find(context, cls, it, offArgs.size) ?: CarBridge.find(context, cls, it) }
+        val onArgs = nums(o?.optJSONArray("onArgs")) ?: f.onArgs
+        val offArgs = nums(o?.optJSONArray("offArgs")) ?: f.offArgs
+        val onM = (o?.optString("on")?.ifEmpty { null } ?: f.on)?.let { CarBridge.find(context, cls, it, onArgs.size) }
+        val offM = (o?.optString("off")?.ifEmpty { null } ?: f.off)?.let { CarBridge.find(context, cls, it, offArgs.size) }
+        val zeroM = f.zeroSet?.let { CarBridge.find(context, cls, it, f.zeroArgs.size) }
 
         val labels = mutableMapOf<String, String>()
         o?.optJSONObject("labels")?.let { l -> l.keys().forEach { k -> labels[k] = l.getString(k) } }
+        if (f.id == "gear" && labels.isEmpty()) {
+            // GEARBOX_AUTO_MODE_P=1, R=2, N=3, D=4, M=5, S=6
+            labels.putAll(mapOf("1" to "P", "2" to "R", "3" to "N", "4" to "D", "5" to "M", "6" to "S"))
+        }
 
-        Binding(getter, getArgs, setter, setArgs, onM, onArgs, offM, offArgs,
-            o?.optDouble("scale", 1.0) ?: 1.0, labels)
+        Binding(getter, getArgs, setter, setArgs, onM, onArgs, offM, offArgs, zeroM, f.zeroArgs,
+            o?.optInt("offset", f.offset) ?: f.offset, o?.optDouble("scale", 1.0) ?: 1.0, labels)
     }
 
     fun bindingInfo(context: Context, f: Feature) = bind(context, f).toString()

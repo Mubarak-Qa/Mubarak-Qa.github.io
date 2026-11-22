@@ -21,6 +21,8 @@ import com.mubarak.bydspeed.R
 import com.mubarak.bydspeed.car.Binding
 import com.mubarak.bydspeed.car.CarBridge
 import com.mubarak.bydspeed.car.CarFeatures
+import com.mubarak.bydspeed.car.CarPermissions
+import androidx.activity.result.contract.ActivityResultContracts
 import com.mubarak.bydspeed.car.Feature
 import com.mubarak.bydspeed.car.Kind
 import java.util.concurrent.Executors
@@ -33,6 +35,10 @@ class CarFragment : Fragment() {
     private val io = Executors.newSingleThreadExecutor()
     private val refreshers = mutableListOf<() -> Unit>()
     private lateinit var content: LinearLayout
+
+    private val permLauncher = registerForActivityResult(ActivityResultContracts.RequestMultiplePermissions()) {
+        rebuild()
+    }
 
     override fun onCreateView(inflater: LayoutInflater, container: ViewGroup?, state: Bundle?): View {
         val ctx = requireContext()
@@ -67,6 +73,24 @@ class CarFragment : Fragment() {
             }, lp())
         }
 
+        val perms = CarPermissions.status(ctx)
+        val granted = perms.count { it.granted }
+        if (CarBridge.isAvailable && granted < perms.size) {
+            val requestable = perms.filter { it.requestable && !it.granted }
+            val col = vertical(ctx, ctx.dp(20)).apply {
+                addView(ctx.bodyText(getString(R.string.perm_title, granted, perms.size), 22f))
+                addView(ctx.bodyText(getString(if (requestable.isNotEmpty()) R.string.perm_request_hint else R.string.perm_system_only), 16f)
+                    .apply { alpha = 0.8f; setPadding(0, ctx.dp(6), 0, ctx.dp(6)) })
+                if (requestable.isNotEmpty()) addView(MaterialButton(ctx).apply {
+                    text = getString(R.string.perm_request); textSize = 20f; minHeight = ctx.dp(72)
+                    setOnClickListener { permLauncher.launch(requestable.map { it.name }.toTypedArray()) }
+                })
+            }
+            content.addView(MaterialCardView(ctx).apply {
+                setCardBackgroundColor(0x33FFA000); radius = ctx.dp(20).toFloat(); addView(col)
+            }, lp())
+        }
+
         content.addView(ctx.sectionTitle(getString(R.string.sec_indicators)))
         val grid = GridLayout(ctx).apply { columnCount = 4 }
         CarFeatures.indicators.forEach { f -> grid.addView(indicatorCard(f, b.getValue(f.id))) }
@@ -90,6 +114,7 @@ class CarFragment : Fragment() {
     private fun format(f: Feature, b: Binding, v: Double?): String {
         if (v == null) return "—"
         b.labels[v.roundToInt().toString()]?.let { return it }
+        f.levelLabels.getOrNull(v.roundToInt())?.let { return getString(it) }
         val n = if (v % 1.0 == 0.0) v.toInt().toString() else "%.1f".format(v)
         return if (f.unit.isEmpty()) n else "$n ${f.unit}"
     }

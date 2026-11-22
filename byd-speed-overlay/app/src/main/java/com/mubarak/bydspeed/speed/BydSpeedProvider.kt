@@ -78,8 +78,10 @@ class BydSpeedProvider(private val context: Context) : SpeedProvider {
         private const val POLL_MS = 200L
         val CANDIDATE_CLASSES = listOf(
             "android.hardware.bydauto.speed.BYDAutoSpeedDevice",
+            // Leopard 8 / DiLink 5.1 has no speed device; wheel speed lives here.
+            "android.hardware.bydauto.special.BYDAutoSpecialDevice",
         )
-        val CANDIDATE_METHODS = listOf("getCurrentSpeed", "getSpeed", "getVehicleSpeed")
+        val CANDIDATE_METHODS = listOf("getCurrentSpeed", "getWheelSpeed", "getSpeed", "getVehicleSpeed")
 
         /** Human-readable report of what the BYD framework exposes on this car. */
         fun diagnose(context: Context): String = buildString {

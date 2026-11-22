@@ -1,6 +1,6 @@
 {
-  "versionCode": 3,
-  "versionName": "0.3.0",
-  "apkUrl": "https://mubarak-qa.github.io/byd-speed-overlay/dist/BydCarHub-0.3.0.apk",
-  "notes": "فحص أقصر يعرض القيم الحية، ونسخ النتيجة على أجزاء، وحفظها كملف. ربط الحرارة الخارجية بحساس السيارة."
+  "versionCode": 4,
+  "versionName": "0.4.0",
+  "apkUrl": "https://mubarak-qa.github.io/byd-speed-overlay/dist/BydCarHub-0.4.0.apk",
+  "notes": "ربط أوامر المكيف والمقاعد بأسماء ليوبارد 8 الحقيقية، وطلب صلاحيات السيارة، وتدفئة المقود والمقاعد الخلفية، والسرعة من حساس العجلات."
 }

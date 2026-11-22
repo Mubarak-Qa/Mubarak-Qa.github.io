@@ -126,4 +126,19 @@
     <string name="set_copied_part">Copied part %1$d of %2$d. Paste it, then come back for the next</string>
     <string name="set_save_file">Save file</string>
     <string name="set_saved_to">Saved: %1$s</string>
+    <string name="lvl_off">Off</string>
+    <string name="lvl_low">Low</string>
+    <string name="lvl_high">High</string>
+    <string name="lvl_1">Light</string>
+    <string name="lvl_2">Medium</string>
+    <string name="lvl_3">Strong</string>
+    <string name="seat_heat_rl">Rear-left seat heating</string>
+    <string name="seat_vent_rl">Rear-left seat ventilation</string>
+    <string name="seat_heat_rr">Rear-right seat heating</string>
+    <string name="seat_vent_rr">Rear-right seat ventilation</string>
+    <string name="steering_heat">Steering wheel heating</string>
+    <string name="perm_title">Car permissions: %1$d of %2$d</string>
+    <string name="perm_request">Allow car permissions</string>
+    <string name="perm_request_hint">The BYD system blocks reading and controlling the car until you allow it. Tap the button and accept.</string>
+    <string name="perm_system_only">The BYD system only grants these permissions to system apps, so they can\'t be requested here. Run Settings → Car developer tools → Scan and send it to the developer.</string>
 </resources>

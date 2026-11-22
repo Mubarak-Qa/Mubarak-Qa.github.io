@@ -149,6 +149,9 @@ object CarBridge {
         append("Android ${android.os.Build.VERSION.RELEASE} (API ${android.os.Build.VERSION.SDK_INT}) · ")
         append("${android.os.Build.MANUFACTURER} ${android.os.Build.MODEL} · ${android.os.Build.DISPLAY}\n")
         append("Devices: ${devs.keys.joinToString(", ") { shortName(it).substringBefore('.') }}\n")
+        val perms = CarPermissions.status(context)
+        append("BYD permissions granted: ${perms.count { it.granted }}/${perms.size}, ")
+        append("protection: ${perms.groupingBy { it.protection }.eachCount()}\n")
 
         val ordered = devs.entries.sortedBy { e ->
             PRIORITY.indexOf(shortName(e.key).substringBefore('.')).let { if (it < 0) 99 else it }
@@ -195,6 +198,7 @@ object CarBridge {
             append("\nNot available: ")
             append(errors.keys.joinToString(", ") { shortName(it) }).append('\n')
         }
+        append("\n").append(CarPermissions.summary(CarPermissions.status(context)))
         append("\nBindings:\n")
         CarFeatures.all.forEach { f -> append(" ${f.id}: ${CarFeatures.bindingInfo(context, f)}\n") }
     }
