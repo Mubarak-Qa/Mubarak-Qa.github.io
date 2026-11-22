@@ -1,6 +1,6 @@
 {
-  "versionCode": 10,
-  "versionName": "0.7.2",
-  "apkUrl": "https://mubarak-qa.github.io/byd-speed-overlay/dist/BydCarHub-0.7.2.apk",
-  "notes": "اتصال ADB مباشر (بدون إقران) يعرض رسالة السماح الكلاسيكية مثل باقي البرامج."
+  "versionCode": 11,
+  "versionName": "0.7.3",
+  "apkUrl": "https://mubarak-qa.github.io/byd-speed-overlay/dist/BydCarHub-0.7.3.apk",
+  "notes": "أداة فحص منافذ ADB لاكتشاف المنفذ الحقيقي، ومهلة للاتصال حتى لا يعلّق."
 }

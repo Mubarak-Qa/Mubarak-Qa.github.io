@@ -55,10 +55,13 @@ object AdbCar {
                 val mgr = AdbCarManager.getInstance(context)
                 log("autoConnect…")
                 val ok = try {
+                    val p = when {
+                        port > 0 -> port
+                        legacy -> { diagnose(context); discovered.takeIf { it > 0 } ?: 5555 }
+                        else -> 0
+                    }
                     when {
-                        legacy && port > 0 -> { log("legacy connect 127.0.0.1:$port"); mgr.connect("127.0.0.1", port) }
-                        legacy -> { log("legacy connectTcp (adbd)…"); mgr.connectTcp(context, 15_000) }
-                        port > 0 -> { log("connect 127.0.0.1:$port"); mgr.connect("127.0.0.1", port) }
+                        p > 0 -> { log("connect 127.0.0.1:$p"); mgr.connect("127.0.0.1", p) }
                         else -> { log("autoConnect (mDNS)…"); mgr.autoConnect(context, 12_000) }
                     }
                 } catch (e: AdbPairingRequiredException) {
@@ -173,6 +176,42 @@ object AdbCar {
         val j = request(JSONObject().put("op", "scan")) ?: return null
         return if (j.optBoolean("ok")) j.optString("report") else null
     }
+
+    private fun prop(key: String): String = try {
+        Class.forName("android.os.SystemProperties").getMethod("get", String::class.java).invoke(null, key) as String
+    } catch (t: Throwable) { "" }
+
+    private fun global(context: Context, key: String): String = try {
+        android.provider.Settings.Global.getString(context.contentResolver, key) ?: ""
+    } catch (t: Throwable) { "" }
+
+    private fun portOpen(port: Int): Boolean = try {
+        java.net.Socket().use { it.connect(java.net.InetSocketAddress("127.0.0.1", port), 300); true }
+    } catch (t: Throwable) { false }
+
+    /** Reads ADB-related properties/settings and probes likely ports; returns a human report. */
+    fun diagnose(context: Context): String {
+        val sb = StringBuilder("=== ADB diagnose ===\n")
+        for (k in listOf("service.adb.tcp.port", "service.adb.tls.port", "persist.adb.tls_server.enable",
+                "init.svc.adbd", "ro.adb.secure", "persist.sys.adb.wiress.enable")) {
+            val v = prop(k); if (v.isNotEmpty()) sb.append("$k = $v\n")
+        }
+        sb.append("adb_enabled = ${global(context, "adb_enabled")}\n")
+        sb.append("adb_wifi_enabled = ${global(context, "adb_wifi_enabled")}\n")
+        val tcp = prop("service.adb.tcp.port").toIntOrNull()
+        val tls = prop("service.adb.tls.port").toIntOrNull()
+        val candidates = listOfNotNull(tcp, tls, 5555).distinct()
+        val open = candidates.filter { portOpen(it) }
+        sb.append("candidate ports: ").append(candidates.joinToString(",")).append('\n')
+        sb.append("OPEN ports: ").append(if (open.isEmpty()) "none" else open.joinToString(",")).append('\n')
+        discovered = open.firstOrNull() ?: tls ?: tcp ?: 0
+        if (discovered > 0) sb.append("→ will use port $discovered\n")
+        log(sb.toString())
+        return sb.toString()
+    }
+
+    @Volatile var discovered = 0
+        private set
 
     fun disconnect() {
         runCatching { stream?.close() }

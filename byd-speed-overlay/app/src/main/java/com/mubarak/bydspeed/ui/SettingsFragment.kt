@@ -122,6 +122,12 @@ class SettingsFragment : Fragment() {
             text = getString(R.string.adbx_direct); textSize = 18f; minHeight = ctx.dp(72)
             setOnClickListener { showDirectDialog(ctx) { refreshAdbx() } }
         }, lp())
+        root.addView(MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+            text = getString(R.string.adbx_probe); textSize = 18f; minHeight = ctx.dp(64)
+            setOnClickListener {
+                io.execute { AdbCar.diagnose(ctx.applicationContext); main.post { refreshAdbx() } }
+            }
+        }, lp().apply { topMargin = ctx.dp(8) })
         val adbxBtns = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL }
         adbxBtns.addView(MaterialButton(ctx).apply {
             text = getString(R.string.adbx_connect); textSize = 18f; minHeight = ctx.dp(64)
