@@ -22,6 +22,7 @@ import com.mubarak.bydspeed.car.Binding
 import com.mubarak.bydspeed.car.CarBridge
 import com.mubarak.bydspeed.car.CarFeatures
 import com.mubarak.bydspeed.car.ShizukuCar
+import com.mubarak.bydspeed.car.CarLink
 import androidx.activity.result.contract.ActivityResultContracts
 import com.mubarak.bydspeed.car.Feature
 import com.mubarak.bydspeed.car.Kind
@@ -74,7 +75,7 @@ class CarFragment : Fragment() {
         }
 
         val state = ShizukuCar.status()
-        if (CarBridge.isAvailable && state != ShizukuCar.State.CONNECTED) {
+        if (CarBridge.isAvailable && !CarLink.connected) {
             val msg = when (state) {
                 ShizukuCar.State.NO_SHIZUKU -> getString(R.string.shizuku_not_running)
                 ShizukuCar.State.OLD -> getString(R.string.shizuku_old)
@@ -92,10 +93,10 @@ class CarFragment : Fragment() {
             content.addView(MaterialCardView(ctx).apply {
                 setCardBackgroundColor(0x33FFA000); radius = ctx.dp(20).toFloat(); addView(col)
             }, lp())
-        } else if (state == ShizukuCar.State.CONNECTED) {
+        } else if (CarLink.connected) {
             content.addView(MaterialCardView(ctx).apply {
                 setCardBackgroundColor(0x3343A047); radius = ctx.dp(20).toFloat()
-                addView(ctx.bodyText("✔ " + getString(R.string.shizuku_connected), 18f).apply {
+                addView(ctx.bodyText("✔ " + getString(R.string.car_link_on, CarLink.mode.uppercase()), 18f).apply {
                     setPadding(ctx.dp(20), ctx.dp(14), ctx.dp(20), ctx.dp(14))
                 })
             }, lp())

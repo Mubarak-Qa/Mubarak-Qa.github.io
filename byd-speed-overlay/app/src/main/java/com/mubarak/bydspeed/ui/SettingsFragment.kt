@@ -32,6 +32,10 @@ import com.mubarak.bydspeed.car.CarBridge
 import com.mubarak.bydspeed.car.CarFeatures
 import com.mubarak.bydspeed.car.ShizukuCar
 import com.mubarak.bydspeed.car.AdbControl
+import com.mubarak.bydspeed.car.AdbCar
+import com.mubarak.bydspeed.car.CarLink
+import android.text.InputType as IT
+import android.widget.EditText as ET
 import org.json.JSONObject
 import java.util.concurrent.Executors
 
@@ -93,6 +97,40 @@ class SettingsFragment : Fragment() {
         }, lp())
         ShizukuCar.onChange = { main.post { refreshShizuku(); refreshCarTab() } }
 
+        // ADB direct (no Shizuku) — the OneHub-style path.
+        root.addView(ctx.sectionTitle(getString(R.string.adbx_title)))
+        root.addView(ctx.bodyText(getString(R.string.adbx_hint), 15f).apply { alpha = 0.75f })
+        val adbxStatus = ctx.bodyText("", 18f).apply { setPadding(0, ctx.dp(8), 0, ctx.dp(4)) }
+        val adbxLog = ctx.bodyText("", 13f).apply {
+            typeface = Typeface.MONOSPACE; textDirection = View.TEXT_DIRECTION_LTR
+            setTextIsSelectable(true); alpha = 0.7f
+        }
+        fun refreshAdbx() {
+            adbxStatus.text = when (AdbCar.state) {
+                AdbCar.State.CONNECTED -> "✔ " + getString(R.string.adbx_connected)
+                AdbCar.State.CONNECTING -> getString(R.string.adbx_connecting)
+                AdbCar.State.PAIRING_REQUIRED -> getString(R.string.adbx_pairing_required)
+                AdbCar.State.ERROR -> getString(R.string.adbx_error, AdbCar.lastError ?: "")
+                else -> getString(R.string.adbx_disconnected)
+            }
+            adbxLog.text = AdbCar.log.toString().takeLast(1500)
+        }
+        refreshAdbx()
+        AdbCar.onChange = { main.post { refreshAdbx(); refreshCarTab() } }
+        root.addView(adbxStatus)
+        val adbxBtns = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL }
+        adbxBtns.addView(MaterialButton(ctx).apply {
+            text = getString(R.string.adbx_connect); textSize = 18f; minHeight = ctx.dp(64)
+            setOnClickListener { AdbCar.connect(ctx.applicationContext); main.postDelayed({ refreshAdbx() }, 500) }
+        }, lp(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        adbxBtns.addView(MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+            text = getString(R.string.adbx_pair); textSize = 18f; minHeight = ctx.dp(64)
+            setOnClickListener { showPairDialog(ctx) { refreshAdbx() } }
+        }, lp(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = ctx.dp(8) })
+        root.addView(adbxBtns)
+        root.addView(adbxLog)
+
+
         // Automatic ADB keep-alive (OneHub-style), gated on a one-time WRITE_SECURE_SETTINGS grant.
         val adbStatus = ctx.bodyText("", 16f).apply { setPadding(0, ctx.dp(8), 0, ctx.dp(4)) }
         fun refreshAdb() {
@@ -140,7 +178,7 @@ class SettingsFragment : Fragment() {
             setOnClickListener {
                 report.text = getString(R.string.car_loading)
                 io.execute {
-                    val r = ShizukuCar.scan()
+                    val r = CarLink.scan()
                         ?: runCatching { CarBridge.scanReport(ctx.applicationContext) }.getOrElse { it.toString() }
                     main.post {
                         if (!isAdded) return@post
@@ -234,6 +272,27 @@ class SettingsFragment : Fragment() {
         val f = java.io.File(ctx.getExternalFilesDir(null), name)
         f.writeText(text)
         return f.path
+    }
+
+    private fun showPairDialog(ctx: android.content.Context, onDone: () -> Unit) {
+        val input = ET(ctx).apply {
+            inputType = IT.TYPE_CLASS_NUMBER
+            hint = getString(R.string.adbx_code_hint); textSize = 22f
+        }
+        MaterialAlertDialogBuilder(ctx)
+            .setTitle(R.string.adbx_pair)
+            .setMessage(R.string.adbx_pair_msg)
+            .setView(input)
+            .setPositiveButton(R.string.adbx_pair) { _, _ ->
+                val code = input.text.toString().trim()
+                if (code.length < 6) { toast(getString(R.string.adbx_code_hint)); return@setPositiveButton }
+                toast(getString(R.string.adbx_pairing))
+                AdbCar.pair(ctx.applicationContext, code) { ok, err ->
+                    main.post { toast(if (ok) getString(R.string.adbx_paired) else getString(R.string.adbx_error, err ?: "")); onDone() }
+                }
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
     }
 
     private fun refreshCarTab() {

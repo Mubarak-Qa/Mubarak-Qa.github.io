@@ -67,13 +67,13 @@ class Binding(
     private val scale: Double,
     val labels: Map<String, String>,
 ) {
-    val canRead get() = localGetter != null || (ShizukuCar.connected && getMethods.isNotEmpty())
-    val canWrite get() = (setMethod != null && (localSetter != null || ShizukuCar.connected)) ||
-        (onMethod != null && offMethod != null && (localOn != null || ShizukuCar.connected))
+    val canRead get() = localGetter != null || (CarLink.connected && getMethods.isNotEmpty())
+    val canWrite get() = (setMethod != null && (localSetter != null || CarLink.connected)) ||
+        (onMethod != null && offMethod != null && (localOn != null || CarLink.connected))
 
     /** UI value, or null when unavailable. Reads via Shizuku (shell UID) when connected. */
     fun read(): Double? {
-        val raw = if (ShizukuCar.connected) ShizukuCar.get(cls, getMethods, getArgs)
+        val raw = if (CarLink.connected) CarLink.get(cls, getMethods, getArgs)
         else localGetter?.let { (o, m) ->
             try { (CarBridge.invoke(o, m, getArgs.map { it as Number }) as? Number)?.toDouble() } catch (t: Throwable) { null }
         }
@@ -90,7 +90,7 @@ class Binding(
             setMethod != null -> setMethod to setArgsSpec.map { if (it == "v") (value + offset).toDouble() else (it as Number).toDouble() }
             else -> return "unsupported"
         }
-        if (ShizukuCar.connected) return ShizukuCar.set(cls, name, args)
+        if (CarLink.connected) return CarLink.set(cls, name, args)
         // Local fallback (will usually fail with "permission deny" until Shizuku is connected).
         val p = CarBridge.find(localAppContext ?: return "no-context", cls, name, args.size) ?: return "missing $name"
         return try {

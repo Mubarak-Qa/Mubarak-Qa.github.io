@@ -1,6 +1,6 @@
 {
-  "versionCode": 7,
-  "versionName": "0.6.0",
-  "apkUrl": "https://mubarak-qa.github.io/byd-speed-overlay/dist/BydCarHub-0.6.0.apk",
-  "notes": "ربط Shizuku تلقائياً عند فتح التطبيق، وتفعيل ADB تلقائياً بعد منح WRITE_SECURE_SETTINGS مرة واحدة."
+  "versionCode": 8,
+  "versionName": "0.7.0",
+  "apkUrl": "https://mubarak-qa.github.io/byd-speed-overlay/dist/BydCarHub-0.7.0.apk",
+  "notes": "تحكم بالسيارة بدون Shizuku: عميل ADB مدمج يتصل بالسيارة ويشغّل الأوامر بهوية الشِّل. الإعداد لمرة واحدة عبر الاقتران اللاسلكي."
 }

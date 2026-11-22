@@ -157,4 +157,18 @@
     <string name="adb_enable">Enable ADB now</string>
     <string name="adb_copy_cmd">Copy grant command</string>
     <string name="adb_failed">Failed: %1$s</string>
+    <string name="car_link_on">Connected to car (%1$s), control enabled</string>
+    <string name="adbx_title">Direct ADB (no Shizuku)</string>
+    <string name="adbx_hint">The app connects to the car as an ADB client and runs commands itself. One-time: enable Wireless debugging in Developer options, then pair with the code. After that it auto-connects. (Experimental)</string>
+    <string name="adbx_connect">Connect</string>
+    <string name="adbx_pair">Pair with code</string>
+    <string name="adbx_pair_msg">On the car: Developer options → Wireless debugging → Pair device with code. Enter the 6-digit code here.</string>
+    <string name="adbx_code_hint">Pairing code (6 digits)</string>
+    <string name="adbx_pairing">Pairing…</string>
+    <string name="adbx_paired">Paired</string>
+    <string name="adbx_connecting">Connecting…</string>
+    <string name="adbx_connected">Connected via ADB, control enabled</string>
+    <string name="adbx_pairing_required">Pairing required, tap "Pair with code".</string>
+    <string name="adbx_disconnected">Not connected</string>
+    <string name="adbx_error">Error: %1$s</string>
 </resources>

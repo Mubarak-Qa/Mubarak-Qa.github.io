@@ -8,6 +8,8 @@ class App : Application() {
         super.onCreate()
         applyTheme(Prefs(this).theme)
         com.mubarak.bydspeed.car.ShizukuCar.autoStart()
+        // Try the no-Shizuku ADB path automatically (works once paired).
+        com.mubarak.bydspeed.car.AdbCar.connect(this)
     }
 
     companion object {

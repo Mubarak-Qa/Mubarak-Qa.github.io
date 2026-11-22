@@ -157,4 +157,18 @@
     <string name="adb_enable">تفعيل ADB الآن</string>
     <string name="adb_copy_cmd">نسخ أمر المنح</string>
     <string name="adb_failed">فشل: %1$s</string>
+    <string name="car_link_on">متصل بالسيارة (%1$s)، التحكم مفعّل</string>
+    <string name="adbx_title">ADB مباشر (بدون Shizuku)</string>
+    <string name="adbx_hint">يتصل التطبيق بالسيارة كعميل ADB ويشغّل الأوامر بنفسه. الإعداد لمرة واحدة: فعّل "تصحيح الأخطاء اللاسلكي" في خيارات المطور، ثم اقترن بالرمز. بعدها يتصل تلقائياً. (تجريبي)</string>
+    <string name="adbx_connect">اتصال</string>
+    <string name="adbx_pair">اقتران بالرمز</string>
+    <string name="adbx_pair_msg">في السيارة: خيارات المطور ← تصحيح الأخطاء اللاسلكي ← اقتران الجهاز برمز. أدخل الرمز المكوّن من 6 أرقام هنا.</string>
+    <string name="adbx_code_hint">رمز الاقتران (6 أرقام)</string>
+    <string name="adbx_pairing">جارٍ الاقتران…</string>
+    <string name="adbx_paired">تم الاقتران</string>
+    <string name="adbx_connecting">جارٍ الاتصال…</string>
+    <string name="adbx_connected">متصل عبر ADB، التحكم مفعّل</string>
+    <string name="adbx_pairing_required">يلزم الاقتران أولاً، اضغط "اقتران بالرمز".</string>
+    <string name="adbx_disconnected">غير متصل</string>
+    <string name="adbx_error">خطأ: %1$s</string>
 </resources>
