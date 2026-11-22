@@ -7,6 +7,7 @@ class App : Application() {
     override fun onCreate() {
         super.onCreate()
         applyTheme(Prefs(this).theme)
+        com.mubarak.bydspeed.car.ShizukuCar.autoStart()
     }
 
     companion object {

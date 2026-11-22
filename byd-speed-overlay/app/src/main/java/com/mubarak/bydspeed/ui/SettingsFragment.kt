@@ -31,6 +31,7 @@ import com.mubarak.bydspeed.UpdateChecker
 import com.mubarak.bydspeed.car.CarBridge
 import com.mubarak.bydspeed.car.CarFeatures
 import com.mubarak.bydspeed.car.ShizukuCar
+import com.mubarak.bydspeed.car.AdbControl
 import org.json.JSONObject
 import java.util.concurrent.Executors
 
@@ -91,6 +92,38 @@ class SettingsFragment : Fragment() {
             setOnClickListener { ShizukuCar.connect(); main.postDelayed({ refreshShizuku(); refreshCarTab() }, 800) }
         }, lp())
         ShizukuCar.onChange = { main.post { refreshShizuku(); refreshCarTab() } }
+
+        // Automatic ADB keep-alive (OneHub-style), gated on a one-time WRITE_SECURE_SETTINGS grant.
+        val adbStatus = ctx.bodyText("", 16f).apply { setPadding(0, ctx.dp(8), 0, ctx.dp(4)) }
+        fun refreshAdb() {
+            adbStatus.text = if (!AdbControl.hasSecureWrite(ctx)) getString(R.string.adb_need_grant)
+            else getString(if (AdbControl.isAdbEnabled(ctx)) R.string.adb_on else R.string.adb_off)
+        }
+        refreshAdb()
+        root.addView(adbStatus)
+        val adbBtns = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL }
+        adbBtns.addView(MaterialButton(ctx).apply {
+            text = getString(R.string.adb_enable); textSize = 18f; minHeight = ctx.dp(64)
+            setOnClickListener {
+                if (!AdbControl.hasSecureWrite(ctx)) { toast(getString(R.string.adb_need_grant)); return@setOnClickListener }
+                toast(AdbControl.enableAdb(ctx)?.let { getString(R.string.adb_failed, it) } ?: getString(R.string.adb_on))
+                refreshAdb()
+            }
+        }, lp(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
+        adbBtns.addView(MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
+            text = getString(R.string.adb_copy_cmd); textSize = 18f; minHeight = ctx.dp(64)
+            setOnClickListener {
+                val cm = ctx.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                cm.setPrimaryClip(ClipData.newPlainText("cmd", AdbControl.GRANT_COMMAND))
+                toast(getString(R.string.set_copied))
+            }
+        }, lp(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f).apply { marginStart = ctx.dp(8) })
+        root.addView(adbBtns)
+        root.addView(ctx.bodyText(AdbControl.GRANT_COMMAND, 13f).apply {
+            typeface = Typeface.MONOSPACE; setTextIsSelectable(true)
+            textDirection = View.TEXT_DIRECTION_LTR; alpha = 0.7f; setPadding(0, ctx.dp(6), 0, 0)
+        })
+
 
         // Car developer tools
         root.addView(ctx.sectionTitle(getString(R.string.set_dev)))

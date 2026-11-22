@@ -151,4 +151,10 @@
     <string name="shizuku_binding">جارٍ الاتصال بخدمة السيارة…</string>
     <string name="shizuku_old">إصدار Shizuku قديم، حدّثه.</string>
     <string name="shizuku_error">تعذر الاتصال بـ Shizuku.</string>
+    <string name="adb_need_grant">لتفعيل ADB تلقائياً، نفّذ أمر المنح مرة واحدة (في الأسفل).</string>
+    <string name="adb_on">ADB مفعّل ✔</string>
+    <string name="adb_off">ADB غير مفعّل</string>
+    <string name="adb_enable">تفعيل ADB الآن</string>
+    <string name="adb_copy_cmd">نسخ أمر المنح</string>
+    <string name="adb_failed">فشل: %1$s</string>
 </resources>

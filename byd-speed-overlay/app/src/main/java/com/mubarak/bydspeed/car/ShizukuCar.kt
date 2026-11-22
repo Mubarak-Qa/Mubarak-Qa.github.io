@@ -32,6 +32,25 @@ object ShizukuCar {
         if (code == REQ && grant == PackageManager.PERMISSION_GRANTED) bind() else onChange?.invoke()
     }
 
+    @Volatile private var started = false
+
+    /** Call once at app startup: auto-binds whenever Shizuku is running and already authorized. */
+    fun autoStart() {
+        if (started) return
+        started = true
+        try {
+            Shizuku.addRequestPermissionResultListener(permListener)
+            Shizuku.addBinderDeadListener { bridge = null; onChange?.invoke() }
+            Shizuku.addBinderReceivedListenerSticky {
+                try {
+                    if (!connected && !Shizuku.isPreV11() &&
+                        Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) bind()
+                } catch (_: Throwable) {}
+                onChange?.invoke()
+            }
+        } catch (_: Throwable) {}
+    }
+
     private val args by lazy {
         Shizuku.UserServiceArgs(ComponentName(BuildConfig.APPLICATION_ID, CarUserService::class.java.name))
             .daemon(false).processNameSuffix("car").debuggable(BuildConfig.DEBUG).version(BuildConfig.VERSION_CODE)
@@ -53,11 +72,8 @@ object ShizukuCar {
             !Shizuku.pingBinder() -> State.NO_SHIZUKU
             Shizuku.isPreV11() -> State.OLD
             connected -> State.CONNECTED
-            else -> {
-                Shizuku.addRequestPermissionResultListener(permListener)
-                if (Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED) { bind(); State.BINDING }
-                else { Shizuku.requestPermission(REQ); State.NO_PERMISSION }
-            }
+            Shizuku.checkSelfPermission() == PackageManager.PERMISSION_GRANTED -> { bind(); State.BINDING }
+            else -> { Shizuku.requestPermission(REQ); State.NO_PERMISSION }
         }
     } catch (t: Throwable) { State.ERROR }
 

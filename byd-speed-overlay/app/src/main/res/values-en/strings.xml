@@ -151,4 +151,10 @@
     <string name="shizuku_binding">Connecting to the car service…</string>
     <string name="shizuku_old">Shizuku version is too old, update it.</string>
     <string name="shizuku_error">Could not connect to Shizuku.</string>
+    <string name="adb_need_grant">To enable ADB automatically, run the one-time grant command below.</string>
+    <string name="adb_on">ADB is enabled ✔</string>
+    <string name="adb_off">ADB is disabled</string>
+    <string name="adb_enable">Enable ADB now</string>
+    <string name="adb_copy_cmd">Copy grant command</string>
+    <string name="adb_failed">Failed: %1$s</string>
 </resources>
