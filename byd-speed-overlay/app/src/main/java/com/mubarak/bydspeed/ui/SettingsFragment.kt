@@ -121,7 +121,7 @@ class SettingsFragment : Fragment() {
         val adbxBtns = LinearLayout(ctx).apply { orientation = LinearLayout.HORIZONTAL }
         adbxBtns.addView(MaterialButton(ctx).apply {
             text = getString(R.string.adbx_connect); textSize = 18f; minHeight = ctx.dp(64)
-            setOnClickListener { AdbCar.connect(ctx.applicationContext); main.postDelayed({ refreshAdbx() }, 500) }
+            setOnClickListener { showConnectDialog(ctx) { refreshAdbx() } }
         }, lp(0, ViewGroup.LayoutParams.WRAP_CONTENT, 1f))
         adbxBtns.addView(MaterialButton(ctx, null, com.google.android.material.R.attr.materialButtonOutlinedStyle).apply {
             text = getString(R.string.adbx_pair); textSize = 18f; minHeight = ctx.dp(64)
@@ -274,20 +274,45 @@ class SettingsFragment : Fragment() {
         return f.path
     }
 
-    private fun showPairDialog(ctx: android.content.Context, onDone: () -> Unit) {
-        val input = ET(ctx).apply {
-            inputType = IT.TYPE_CLASS_NUMBER
-            hint = getString(R.string.adbx_code_hint); textSize = 22f
+    private fun portAndCodeView(ctx: android.content.Context, withCode: Boolean): Pair<LinearLayout, Pair<ET, ET?>> {
+        val col = LinearLayout(ctx).apply { orientation = LinearLayout.VERTICAL; setPadding(ctx.dp(24), ctx.dp(8), ctx.dp(24), 0) }
+        val port = ET(ctx).apply { inputType = IT.TYPE_CLASS_NUMBER; hint = getString(R.string.adbx_port_hint); textSize = 20f }
+        col.addView(port)
+        var code: ET? = null
+        if (withCode) {
+            code = ET(ctx).apply { inputType = IT.TYPE_CLASS_NUMBER; hint = getString(R.string.adbx_code_hint); textSize = 20f }
+            col.addView(code)
         }
+        return col to (port to code)
+    }
+
+    private fun showConnectDialog(ctx: android.content.Context, onDone: () -> Unit) {
+        val (view, fields) = portAndCodeView(ctx, false)
+        MaterialAlertDialogBuilder(ctx)
+            .setTitle(R.string.adbx_connect)
+            .setMessage(R.string.adbx_connect_msg)
+            .setView(view)
+            .setPositiveButton(R.string.adbx_connect) { _, _ ->
+                val port = fields.first.text.toString().trim().toIntOrNull() ?: 0
+                AdbCar.connect(ctx.applicationContext, port)
+                main.postDelayed({ onDone() }, 600)
+            }
+            .setNegativeButton(android.R.string.cancel, null)
+            .show()
+    }
+
+    private fun showPairDialog(ctx: android.content.Context, onDone: () -> Unit) {
+        val (view, fields) = portAndCodeView(ctx, true)
         MaterialAlertDialogBuilder(ctx)
             .setTitle(R.string.adbx_pair)
             .setMessage(R.string.adbx_pair_msg)
-            .setView(input)
+            .setView(view)
             .setPositiveButton(R.string.adbx_pair) { _, _ ->
-                val code = input.text.toString().trim()
+                val port = fields.first.text.toString().trim().toIntOrNull() ?: 0
+                val code = fields.second?.text.toString().trim()
                 if (code.length < 6) { toast(getString(R.string.adbx_code_hint)); return@setPositiveButton }
                 toast(getString(R.string.adbx_pairing))
-                AdbCar.pair(ctx.applicationContext, code) { ok, err ->
+                AdbCar.pair(ctx.applicationContext, code, port) { ok, err ->
                     main.post { toast(if (ok) getString(R.string.adbx_paired) else getString(R.string.adbx_error, err ?: "")); onDone() }
                 }
             }

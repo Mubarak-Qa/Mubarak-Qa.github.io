@@ -162,7 +162,7 @@
     <string name="adbx_hint">The app connects to the car as an ADB client and runs commands itself. One-time: enable Wireless debugging in Developer options, then pair with the code. After that it auto-connects. (Experimental)</string>
     <string name="adbx_connect">Connect</string>
     <string name="adbx_pair">Pair with code</string>
-    <string name="adbx_pair_msg">On the car: Developer options → Wireless debugging → Pair device with code. Enter the 6-digit code here.</string>
+    <string name="adbx_pair_msg">On the car: Developer options → Wireless debugging → Pair device with code. Type the port shown in the pairing dialog and the 6-digit code.</string>
     <string name="adbx_code_hint">Pairing code (6 digits)</string>
     <string name="adbx_pairing">Pairing…</string>
     <string name="adbx_paired">Paired</string>
@@ -171,4 +171,6 @@
     <string name="adbx_pairing_required">Pairing required, tap "Pair with code".</string>
     <string name="adbx_disconnected">Not connected</string>
     <string name="adbx_error">Error: %1$s</string>
+    <string name="adbx_port_hint">Port (number after the colon)</string>
+    <string name="adbx_connect_msg">On the car\'s Wireless debugging screen, type the port shown after the IP (e.g. 39755). Leave empty to auto-discover.</string>
 </resources>

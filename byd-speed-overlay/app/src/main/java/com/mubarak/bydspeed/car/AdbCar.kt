@@ -47,7 +47,7 @@ object AdbCar {
     private fun setState(s: State, err: String? = null) { state = s; lastError = err; onChange?.invoke() }
 
     /** Discover the wireless-debugging connect port via mDNS, then connect and start the daemon. */
-    fun connect(context: Context) {
+    fun connect(context: Context, port: Int = 0) {
         if (state == State.CONNECTING || connected) return
         setState(State.CONNECTING)
         Thread {
@@ -55,7 +55,8 @@ object AdbCar {
                 val mgr = AdbCarManager.getInstance(context)
                 log("autoConnect…")
                 val ok = try {
-                    mgr.autoConnect(context, 12_000)
+                    if (port > 0) { log("connect 127.0.0.1:$port"); mgr.connect("127.0.0.1", port) }
+                    else { log("autoConnect (mDNS)…"); mgr.autoConnect(context, 12_000) }
                 } catch (e: AdbPairingRequiredException) {
                     log("pairing required")
                     setState(State.PAIRING_REQUIRED); return@Thread
@@ -70,13 +71,13 @@ object AdbCar {
     }
 
     /** Pair using the 6-digit code; the pairing port is discovered via mDNS. */
-    fun pair(context: Context, code: String, onDone: (Boolean, String?) -> Unit) {
+    fun pair(context: Context, code: String, port: Int, onDone: (Boolean, String?) -> Unit) {
         Thread {
             try {
-                val port = discoverPort(context, AdbMdns.SERVICE_TYPE_TLS_PAIRING)
-                    ?: run { onDone(false, "pairing port not found (enable Wireless debugging)"); return@Thread }
-                log("pairing on :$port")
-                val ok = AdbCarManager.getInstance(context).pair(port, code)
+                val p = if (port > 0) port else (discoverPort(context, AdbMdns.SERVICE_TYPE_TLS_PAIRING)
+                    ?: run { onDone(false, "pairing port not found; type it from the pairing dialog"); return@Thread })
+                log("pairing on :$p")
+                val ok = AdbCarManager.getInstance(context).pair(p, code)
                 log("pair result: $ok")
                 onDone(ok, if (ok) null else "pair-failed")
                 if (ok) connect(context)
