@@ -63,21 +63,8 @@ object AdbCar {
                 val ok = try {
                     if (p <= 0) { log("autoConnect (mDNS)…"); mgr.autoConnect(context, 12_000) }
                     else {
-                        var result = false
-                        var attempt = 0
-                        while (attempt < 4) {
-                            attempt++
-                            try {
-                                log("connect 127.0.0.1:$p (attempt $attempt)…")
-                                result = mgr.connect("127.0.0.1", p)
-                                break
-                            } catch (e: AdbAuthenticationFailedException) {
-                                log("↯ قُبِلت على السيارة؟ وافق على \"السماح دائماً\" الآن — إعادة المحاولة…")
-                                setState(State.PAIRING_REQUIRED, "waiting for Allow on car")
-                                Thread.sleep(7000)
-                            }
-                        }
-                        result
+                        log("connect 127.0.0.1:$p — انتظر رسالة \"السماح\" على الشاشة واضغط موافق (حتى 60 ثانية)…")
+                        mgr.connect("127.0.0.1", p)
                     }
                 } catch (e: AdbPairingRequiredException) {
                     log("pairing required")
