@@ -1,6 +1,6 @@
 {
-  "versionCode": 14,
-  "versionName": "0.7.6",
-  "apkUrl": "https://mubarak-qa.github.io/byd-speed-overlay/dist/BydCarHub-0.7.6.apk",
-  "notes": "انتظار رسالة السماح بمهلة 60 ثانية بدل الرفض الفوري."
+  "versionCode": 15,
+  "versionName": "0.7.7",
+  "apkUrl": "https://mubarak-qa.github.io/byd-speed-overlay/dist/BydCarHub-0.7.7.apk",
+  "notes": "إرشاد الاتصال بعد الاقتران اللاسلكي."
 }

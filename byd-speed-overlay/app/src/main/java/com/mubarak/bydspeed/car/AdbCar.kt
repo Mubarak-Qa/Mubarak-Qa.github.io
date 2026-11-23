@@ -89,7 +89,7 @@ object AdbCar {
                 val ok = AdbCarManager.getInstance(context).pair(p, code)
                 log("pair result: $ok")
                 onDone(ok, if (ok) null else "pair-failed")
-                if (ok) connect(context)
+                if (ok) log("✔ تم الاقتران. الآن اضغط \"Connect\" وأدخل منفذ الاتصال من شاشة التصحيح اللاسلكي.")
             } catch (t: Throwable) {
                 log("pair ERR ${t.message}")
                 onDone(false, "${t.javaClass.simpleName}: ${t.message}")
