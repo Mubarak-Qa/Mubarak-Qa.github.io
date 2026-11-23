@@ -23,7 +23,7 @@ class AdbCarManager private constructor(context: Context) : AbsAdbConnectionMana
     private val certificate: Certificate
 
     init {
-        setApi(android.os.Build.VERSION.SDK_INT)
+        setApi(28) // advertise Android 9 so adbd uses the classic AUTH+dialog path (not STLS)
         setTimeout(60, java.util.concurrent.TimeUnit.SECONDS)
         val keyFile = File(context.filesDir, "adb_key")
         val certFile = File(context.filesDir, "adb_cert.pem")

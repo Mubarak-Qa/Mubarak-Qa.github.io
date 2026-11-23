@@ -1,6 +1,6 @@
 {
-  "versionCode": 17,
-  "versionName": "0.7.9",
-  "apkUrl": "https://mubarak-qa.github.io/byd-speed-overlay/dist/BydCarHub-0.7.9.apk",
-  "notes": "زر فتح التصحيح اللاسلكي/أداة BYD. المسار الصحيح: لاسلكي + اقتران (المنفذ 5555 لا يعمل بلا رسالة سماح)."
+  "versionCode": 18,
+  "versionName": "0.8.0",
+  "apkUrl": "https://mubarak-qa.github.io/byd-speed-overlay/dist/BydCarHub-0.8.0.apk",
+  "notes": "الإعلان عن أندرويد 9 ليسلك مسار ADB الكلاسيكي الذي يُظهر رسالة السماح (مثل Beetle)."
 }
