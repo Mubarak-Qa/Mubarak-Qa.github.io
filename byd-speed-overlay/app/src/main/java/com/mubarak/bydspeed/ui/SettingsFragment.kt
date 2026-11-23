@@ -119,6 +119,10 @@ class SettingsFragment : Fragment() {
         AdbCar.onChange = { main.post { refreshAdbx(); refreshCarTab() } }
         root.addView(adbxStatus)
         root.addView(MaterialButton(ctx).apply {
+            text = getString(R.string.adbx_open_wireless); textSize = 18f; minHeight = ctx.dp(72)
+            setOnClickListener { openWirelessTools(ctx) }
+        }, lp())
+        root.addView(MaterialButton(ctx).apply {
             text = getString(R.string.adbx_direct); textSize = 18f; minHeight = ctx.dp(72)
             setOnClickListener { showDirectDialog(ctx) { refreshAdbx() } }
         }, lp())
@@ -294,6 +298,21 @@ class SettingsFragment : Fragment() {
             col.addView(code)
         }
         return col to (port to code)
+    }
+
+    private fun openWirelessTools(ctx: android.content.Context) {
+        val pm = ctx.packageManager
+        // Prefer BYD's own Wireless Tools app (what صقر uses), then developer settings.
+        val tries = listOf(
+            pm.getLaunchIntentForPackage("com.byd.wirelesstools"),
+            Intent("android.settings.APPLICATION_DEVELOPMENT_SETTINGS"),
+            Intent(android.provider.Settings.ACTION_DEVICE_INFO_SETTINGS),
+        )
+        for (i in tries) {
+            if (i == null) continue
+            try { i.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK); startActivity(i); return } catch (_: Throwable) {}
+        }
+        toast(getString(R.string.adbx_open_wireless_fail))
     }
 
     private fun showDirectDialog(ctx: android.content.Context, onDone: () -> Unit) {

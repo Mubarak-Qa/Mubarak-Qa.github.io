@@ -1,6 +1,6 @@
 {
-  "versionCode": 16,
-  "versionName": "0.7.8",
-  "apkUrl": "https://mubarak-qa.github.io/byd-speed-overlay/dist/BydCarHub-0.7.8.apk",
-  "notes": "إضافة Conscrypt لإتمام اتصال ADB المشفّر (TLS) مثل باقي البرامج."
+  "versionCode": 17,
+  "versionName": "0.7.9",
+  "apkUrl": "https://mubarak-qa.github.io/byd-speed-overlay/dist/BydCarHub-0.7.9.apk",
+  "notes": "زر فتح التصحيح اللاسلكي/أداة BYD. المسار الصحيح: لاسلكي + اقتران (المنفذ 5555 لا يعمل بلا رسالة سماح)."
 }

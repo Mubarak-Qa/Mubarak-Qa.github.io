@@ -176,4 +176,6 @@
     <string name="adbx_direct">اتصال مباشر (بدون إقران)</string>
     <string name="adbx_direct_msg">جرّب هذه أولاً. يتصل بمنفذ ADB الكلاسيكي (افتراضياً 5555) وتظهر رسالة "السماح بتصحيح الأخطاء؟" في السيارة، اختر السماح دائماً. يتطلب تفعيل تصحيح أخطاء USB في خيارات المطور.</string>
     <string name="adbx_probe">فحص منافذ ADB</string>
+    <string name="adbx_open_wireless">فتح التصحيح اللاسلكي / أداة BYD</string>
+    <string name="adbx_open_wireless_fail">افتح خيارات المطور يدوياً وفعّل التصحيح اللاسلكي</string>
 </resources>

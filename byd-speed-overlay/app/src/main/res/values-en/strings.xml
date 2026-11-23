@@ -176,4 +176,6 @@
     <string name="adbx_direct">Direct connect (no pairing)</string>
     <string name="adbx_direct_msg">Try this first. Connects to the classic ADB port (default 5555); the car shows "Allow debugging?" — choose Always allow. Requires USB debugging enabled in Developer options.</string>
     <string name="adbx_probe">Probe ADB ports</string>
+    <string name="adbx_open_wireless">Open Wireless debugging / BYD tool</string>
+    <string name="adbx_open_wireless_fail">Open Developer options manually and enable Wireless debugging</string>
 </resources>
