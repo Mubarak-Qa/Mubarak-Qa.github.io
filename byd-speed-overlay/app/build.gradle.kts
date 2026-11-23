@@ -11,8 +11,8 @@ android {
         applicationId = "com.mubarak.bydspeed"
         minSdk = 26
         targetSdk = 34
-        versionCode = 15
-        versionName = "0.7.7"
+        versionCode = 16
+        versionName = "0.7.8"
         buildConfigField(
             "String", "UPDATE_URL",
             "\"https://mubarak-qa.github.io/byd-speed-overlay/version.json\""
@@ -49,4 +49,5 @@ dependencies {
     implementation("org.bouncycastle:bcprov-jdk15to18:1.81")
     implementation("org.bouncycastle:bcpkix-jdk15to18:1.81")
     implementation("com.github.MuntashirAkon.spake2-java:spake2-android:2.2.1")
+    implementation("org.conscrypt:conscrypt-android:2.5.3")
 }

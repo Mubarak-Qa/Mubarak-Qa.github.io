@@ -1,6 +1,6 @@
 {
-  "versionCode": 15,
-  "versionName": "0.7.7",
-  "apkUrl": "https://mubarak-qa.github.io/byd-speed-overlay/dist/BydCarHub-0.7.7.apk",
-  "notes": "إرشاد الاتصال بعد الاقتران اللاسلكي."
+  "versionCode": 16,
+  "versionName": "0.7.8",
+  "apkUrl": "https://mubarak-qa.github.io/byd-speed-overlay/dist/BydCarHub-0.7.8.apk",
+  "notes": "إضافة Conscrypt لإتمام اتصال ADB المشفّر (TLS) مثل باقي البرامج."
 }
