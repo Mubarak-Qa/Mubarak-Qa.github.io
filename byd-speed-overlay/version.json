@@ -1,6 +1,6 @@
 {
-  "versionCode": 18,
-  "versionName": "0.8.0",
-  "apkUrl": "https://mubarak-qa.github.io/byd-speed-overlay/dist/BydCarHub-0.8.0.apk",
-  "notes": "الإعلان عن أندرويد 9 ليسلك مسار ADB الكلاسيكي الذي يُظهر رسالة السماح (مثل Beetle)."
+  "versionCode": 19,
+  "versionName": "0.8.1",
+  "apkUrl": "https://mubarak-qa.github.io/byd-speed-overlay/dist/BydCarHub-0.8.1.apk",
+  "notes": "تفعيل Conscrypt صراحةً كمزوّد تشفير + العودة لأندرويد 13 لمصافحة ADB TLS الصحيحة."
 }
