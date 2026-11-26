@@ -57,6 +57,7 @@ final class L {
         p("original", "الأصل: ", "Original: ");
         p("default_title", "تنبيه", "Notification");
         p("theme_desc", "تبديل الوضع النهاري/الليلي", "Toggle light/dark mode");
+        p("remove", "إزالة", "Remove");
         p("lang_desc", "تغيير اللغة", "Change language");
     }
 

@@ -55,7 +55,7 @@ import java.util.Set;
 public class MainActivity extends Activity {
     private final Handler ui = new Handler(Looper.getMainLooper());
     private TextView accessStatus, appsView, testResult, modelStatus;
-    private LinearLayout logBox;
+    private LinearLayout logBox, appsList;
     private Button accessBtn, pickBtn;
     private boolean dark, en;
 
@@ -130,6 +130,9 @@ public class MainActivity extends Activity {
         c2.addView(all);
         appsView = body("");
         c2.addView(appsView);
+        appsList = new LinearLayout(this);
+        appsList.setOrientation(LinearLayout.VERTICAL);
+        c2.addView(appsList);
         pickBtn = primaryButton(t("pick_btn"), v -> pickApps());
         c2.addView(pickBtn);
 
@@ -411,14 +414,16 @@ public class MainActivity extends Activity {
         Set<String> pkgs = Prefs.packages(this);
         pickBtn.setEnabled(!all);
         pickBtn.setAlpha(all ? 0.45f : 1f);
+        appsList.removeAllViews();
         if (all) {
             appsView.setText(t("all_mode_note"));
         } else if (pkgs.isEmpty()) {
             appsView.setText(t("none_selected"));
         } else {
-            StringBuilder sb = new StringBuilder(t("selected"));
-            for (String p : pkgs) sb.append("\n• ").append(label(p));
-            appsView.setText(sb.toString());
+            appsView.setText(t("selected"));
+            List<String> sorted = new ArrayList<>(pkgs);
+            sorted.sort((a, b) -> label(a).compareToIgnoreCase(label(b)));
+            for (String p : sorted) appsList.addView(appRow(p));
         }
 
         logBox.removeAllViews();
@@ -441,6 +446,49 @@ public class MainActivity extends Activity {
             tv.setPadding(dp(12), dp(8), dp(12), dp(8));
             logBox.addView(tv);
         }
+    }
+
+    /** صف تطبيق مختار: أيقونة + اسم + زر حذف. */
+    private View appRow(String pkg) {
+        LinearLayout row = new LinearLayout(this);
+        row.setGravity(Gravity.CENTER_VERTICAL);
+        row.setPadding(dp(10), dp(8), dp(6), dp(8));
+        GradientDrawable bg = new GradientDrawable();
+        bg.setColor(cSoft);
+        bg.setCornerRadius(dp(12));
+        row.setBackground(bg);
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
+        lp.setMargins(0, dp(4), 0, dp(4));
+        row.setLayoutParams(lp);
+
+        ImageView icon = new ImageView(this);
+        try { icon.setImageDrawable(getPackageManager().getApplicationIcon(pkg)); }
+        catch (Exception e) { icon.setImageResource(android.R.drawable.sym_def_app_icon); }
+        row.addView(icon, new LinearLayout.LayoutParams(dp(36), dp(36)));
+
+        TextView name = new TextView(this);
+        name.setText(label(pkg));
+        name.setTextColor(cText);
+        name.setTextSize(15);
+        name.setTypeface(Typeface.DEFAULT_BOLD);
+        name.setTextAlignment(View.TEXT_ALIGNMENT_VIEW_START);
+        name.setPadding(dp(12), 0, dp(8), 0);
+        row.addView(name, new LinearLayout.LayoutParams(0, -2, 1));
+
+        TextView remove = new TextView(this);
+        remove.setText("✕");
+        remove.setTextColor(cSub);
+        remove.setTextSize(16);
+        remove.setGravity(Gravity.CENTER);
+        remove.setContentDescription(t("remove"));
+        remove.setOnClickListener(v -> {
+            Set<String> s = Prefs.packages(this);
+            s.remove(pkg);
+            Prefs.setPackages(this, s);
+            refresh();
+        });
+        row.addView(remove, new LinearLayout.LayoutParams(dp(40), dp(40)));
+        return row;
     }
 
     private static final class AppRow {
@@ -484,11 +532,12 @@ public class MainActivity extends Activity {
                 Drawable ic = icons.get(r.pkg);
                 if (ic == null) {
                     ic = r.ri.loadIcon(pm);
-                    ic.setBounds(0, 0, dp(32), dp(32));
+                    ic.setBounds(0, 0, dp(40), dp(40));
                     icons.put(r.pkg, ic);
                 }
                 row.setCompoundDrawablesRelative(ic, null, null, null);
-                row.setCompoundDrawablePadding(dp(12));
+                row.setCompoundDrawablePadding(dp(14));
+                row.setMinHeight(dp(60));
                 return row;
             }
         };
