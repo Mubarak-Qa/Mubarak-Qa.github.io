@@ -376,10 +376,13 @@ public class MainActivity extends Activity {
         b.setTextColor(primary ? Color.WHITE : cAccent);
         GradientDrawable bg = new GradientDrawable();
         bg.setCornerRadius(dp(12));
-        if (primary) bg.setColor(cAccent); else { bg.setColor(Color.TRANSPARENT); bg.setStroke(dp(1), cAccent); }
+        if (primary) bg.setColor(dark ? 0xFF2F6FE0 : cAccent); else { bg.setColor(Color.TRANSPARENT); bg.setStroke(dp(1), cAccent); }
         b.setBackground(new RippleDrawable(ColorStateList.valueOf(0x33808080), bg, null));
         b.setOnClickListener(l);
-        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, dp(46));
+        b.setMinHeight(dp(46));
+        b.setMinimumHeight(dp(46));
+        b.setPadding(dp(12), dp(10), dp(12), dp(10));
+        LinearLayout.LayoutParams lp = new LinearLayout.LayoutParams(-1, -2);
         lp.setMargins(0, dp(6), 0, dp(4));
         b.setLayoutParams(lp);
         return b;
