@@ -20,11 +20,11 @@ import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 
 /**
- * يستمع لتنبيهات تطبيق السيارة، يترجمها، ثم يعرض تنبيهاً جديداً مترجماً.
+ * يستمع لتنبيهات التطبيقات المختارة، يترجم النص الصيني، ثم يعرض تنبيهاً جديداً مترجماً.
  */
 public class AlertListenerService extends NotificationListenerService {
-    static final String CHANNEL_ALERTS = "car_alerts";
-    static final String CHANNEL_STATUS = "car_status";
+    static final String CHANNEL_ALERTS = "translated_alerts";
+    static final String CHANNEL_STATUS = "translated_status";
 
     private final ExecutorService worker = Executors.newSingleThreadExecutor();
     /** آخر نص تمت ترجمته لكل تنبيه، لتجنّب التكرار عند تحديث التنبيه بنفس المحتوى. */
@@ -41,12 +41,11 @@ public class AlertListenerService extends NotificationListenerService {
     static void createChannels(Context c) {
         if (Build.VERSION.SDK_INT < 26) return;
         NotificationManager nm = c.getSystemService(NotificationManager.class);
-        NotificationChannel alerts = new NotificationChannel(CHANNEL_ALERTS, "تنبيهات السيارة المترجمة",
+        NotificationChannel alerts = new NotificationChannel(CHANNEL_ALERTS, L.t(c, "ch_alerts"),
                 NotificationManager.IMPORTANCE_HIGH);
-        alerts.setDescription("التنبيهات المترجمة من تطبيق السيارة");
         alerts.enableVibration(true);
         nm.createNotificationChannel(alerts);
-        NotificationChannel status = new NotificationChannel(CHANNEL_STATUS, "حالة السيارة المستمرة (مترجمة)",
+        NotificationChannel status = new NotificationChannel(CHANNEL_STATUS, L.t(c, "ch_status"),
                 NotificationManager.IMPORTANCE_LOW);
         nm.createNotificationChannel(status);
     }
@@ -54,8 +53,7 @@ public class AlertListenerService extends NotificationListenerService {
     @Override
     public void onNotificationPosted(StatusBarNotification sbn) {
         if (sbn == null || getPackageName().equals(sbn.getPackageName())) return;
-        String target = Prefs.targetPackage(this);
-        if (!Prefs.ALL_APPS.equals(target) && !target.equals(sbn.getPackageName())) return;
+        if (!Prefs.isTarget(this, sbn.getPackageName())) return;
 
         Notification n = sbn.getNotification();
         if (n == null || (n.flags & Notification.FLAG_GROUP_SUMMARY) != 0) return;
@@ -84,13 +82,14 @@ public class AlertListenerService extends NotificationListenerService {
             Translator.Result tText = Translator.translate(this, fText, lang);
             String outTitle = tTitle != null ? tTitle.text : fTitle;
             String outText = tText != null ? tText.text : fText;
-            String engine = tText != null ? tText.engine : (tTitle != null ? tTitle.engine : "فشل");
+            String engine = tText != null ? tText.engine : (tTitle != null ? tTitle.engine : "failed");
             if (tTitle == null && tText == null) {
-                outTitle = "⚠ تنبيه (تعذّرت الترجمة)";
+                outTitle = L.t(this, "fail_title");
                 outText = fTitle + "\n" + fText;
             }
-            post(key, outTitle, outText, fTitle + "\n" + fText, ongoing, open, pkg);
-            if (!ongoing) Prefs.addLog(this, (fTitle + " " + fText).trim(),
+            String app = appLabel(pkg);
+            post(key, outTitle, outText, fTitle + "\n" + fText, ongoing, open, pkg, app);
+            if (!ongoing) Prefs.addLog(this, app, (fTitle + " " + fText).trim(),
                     (outTitle + " — " + outText).trim(), engine);
 
             if (Prefs.hideOriginal(this) && !ongoing && (tTitle != null || tText != null)) {
@@ -101,15 +100,16 @@ public class AlertListenerService extends NotificationListenerService {
     }
 
     private void post(String key, String title, String text, String original, boolean ongoing,
-                      PendingIntent open, String pkg) {
+                      PendingIntent open, String pkg, String app) {
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
         Notification.Builder b = Build.VERSION.SDK_INT >= 26
                 ? new Notification.Builder(this, ongoing ? CHANNEL_STATUS : CHANNEL_ALERTS)
                 : new Notification.Builder(this);
         b.setSmallIcon(R.drawable.ic_notify)
-                .setContentTitle(title.isEmpty() ? "تنبيه السيارة" : title)
+                .setContentTitle(title.isEmpty() ? L.t(this, "default_title") : title)
                 .setContentText(text)
-                .setStyle(new Notification.BigTextStyle().bigText(text + "\n\n— الأصل: " + original.trim()))
+                .setSubText(app)
+                .setStyle(new Notification.BigTextStyle().bigText(text + "\n\n— " + L.t(this, "original") + original.trim()))
                 .setAutoCancel(!ongoing)
                 .setOngoing(ongoing)
                 .setOnlyAlertOnce(ongoing)
@@ -139,6 +139,13 @@ public class AlertListenerService extends NotificationListenerService {
             NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
             nm.cancel(key.hashCode());
         }
+    }
+
+    private String appLabel(String pkg) {
+        try {
+            android.content.pm.PackageManager pm = getPackageManager();
+            return pm.getApplicationLabel(pm.getApplicationInfo(pkg, 0)).toString();
+        } catch (Exception e) { return pkg; }
     }
 
     private static String str(CharSequence cs) { return cs == null ? "" : cs.toString().trim(); }

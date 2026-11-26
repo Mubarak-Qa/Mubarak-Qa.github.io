@@ -10,9 +10,9 @@ android {
         applicationId 'qa.mubarak.caralert'
         minSdk 24
         targetSdk 34
-        versionCode 1
-        versionName '1.0'
-        ndk { abiFilters 'arm64-v8a', 'armeabi-v7a' }
+        versionCode 2
+        versionName '2.0'
+        if (!project.hasProperty('allAbis')) ndk { abiFilters 'arm64-v8a', 'armeabi-v7a' }
     }
 
     // مفتاح التوقيع يُقرأ من app/keystore.properties (غير مرفوع على GitHub)

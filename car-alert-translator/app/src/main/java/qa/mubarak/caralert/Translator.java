@@ -44,6 +44,9 @@ final class Translator {
     static Result translate(Context ctx, String text, String lang) {
         if (text == null || text.trim().isEmpty() || !hasChinese(text)) return new Result(text, "-");
 
+        text = applyDictionary(ctx, text);
+        if (!hasChinese(text)) return new Result(text, "dictionary");
+
         SharedPreferences cache = ctx.getSharedPreferences("cache_" + lang, Context.MODE_PRIVATE);
         String cached = cache.getString(text, null);
         if (cached != null) return new Result(cached, "cache");
@@ -60,6 +63,22 @@ final class Translator {
         if (cache.getAll().size() > 1000) cache.edit().clear().apply();
         cache.edit().putString(text, out).apply();
         return new Result(out, engine);
+    }
+
+    /** يستبدل الكلمات من القاموس المخصص (الأطول أولاً). */
+    static String applyDictionary(Context ctx, String text) {
+        java.util.List<String[]> pairs = new java.util.ArrayList<>();
+        for (String line : Prefs.dictionary(ctx).split("\\r?\\n")) {
+            int i = line.indexOf('=');
+            if (i <= 0) continue;
+            String k = line.substring(0, i).trim(), v = line.substring(i + 1).trim();
+            if (!k.isEmpty()) pairs.add(new String[]{k, v});
+        }
+        pairs.sort((a, b) -> b[0].length() - a[0].length());
+        for (String[] p : pairs) {
+            if (text.contains(p[0])) text = text.replace(p[0], " " + p[1] + " ");
+        }
+        return text.replaceAll("\\s{2,}", " ").trim();
     }
 
     private static String online(String text, String lang) throws Exception {
