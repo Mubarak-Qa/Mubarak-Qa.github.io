@@ -99,22 +99,55 @@ public class AlertListenerService extends NotificationListenerService {
         });
     }
 
+    /** يعزل كل سطر باتجاه ثابت حتى لا تختلط الكلمات العربية والإنجليزية والأرقام. */
+    private static String dir(String s, boolean rtl) {
+        StringBuilder out = new StringBuilder();
+        for (String line : s.split("\n", -1)) {
+            if (out.length() > 0) out.append('\n');
+            String l = line.trim();
+            if (!l.isEmpty()) out.append(rtl ? '\u2067' : '\u2066').append(l).append('\u2069');
+        }
+        return out.toString();
+    }
+
+    private static String tidy(String s) {
+        // إزالة الفواصل الزائدة في البداية/النهاية الناتجة عن القاموس (مثل "—")
+        return s.replaceAll("^[\\s—:：-]+|[\\s—:：-]+$", "").replaceAll("\\s*[:：]\\s*—\\s*", " — ").trim();
+    }
+
     private void post(String key, String title, String text, String original, boolean ongoing,
                       PendingIntent open, String pkg, String app) {
         NotificationManager nm = (NotificationManager) getSystemService(NOTIFICATION_SERVICE);
+        boolean rtl = !"en".equals(Prefs.lang(this));
+        String t = tidy(title);
+        String body = tidy(text);
+        if (t.isEmpty()) t = L.t(this, "default_title");
+        String fTitle = dir(t, rtl);
+        String fBody = dir(body, rtl);
+
+        String big = fBody;
+        if (Prefs.showOriginal(this) && !original.trim().isEmpty()) {
+            big = fBody + "\n\n" + dir(L.t(this, "original"), rtl) + "\n" + dir(original.trim(), false);
+        }
+
+        String channel = ongoing ? CHANNEL_STATUS : CHANNEL_ALERTS;
+        String group = "tr_" + pkg;
         Notification.Builder b = Build.VERSION.SDK_INT >= 26
-                ? new Notification.Builder(this, ongoing ? CHANNEL_STATUS : CHANNEL_ALERTS)
+                ? new Notification.Builder(this, channel)
                 : new Notification.Builder(this);
         b.setSmallIcon(R.drawable.ic_notify)
-                .setContentTitle(title.isEmpty() ? L.t(this, "default_title") : title)
-                .setContentText(text)
+                .setContentTitle(fTitle)
+                .setContentText(fBody)
                 .setSubText(app)
-                .setStyle(new Notification.BigTextStyle().bigText(text + "\n\n— " + L.t(this, "original") + original.trim()))
+                .setStyle(new Notification.BigTextStyle().setBigContentTitle(fTitle).bigText(big))
+                .setGroup(group)
                 .setAutoCancel(!ongoing)
                 .setOngoing(ongoing)
                 .setOnlyAlertOnce(ongoing)
                 .setShowWhen(true)
                 .setWhen(System.currentTimeMillis());
+        android.graphics.Bitmap icon = appIcon(pkg);
+        if (icon != null) b.setLargeIcon(icon);
         if (Build.VERSION.SDK_INT < 26) b.setPriority(ongoing ? Notification.PRIORITY_LOW : Notification.PRIORITY_HIGH);
         if (!ongoing) b.setDefaults(Notification.DEFAULT_ALL);
 
@@ -125,7 +158,36 @@ public class AlertListenerService extends NotificationListenerService {
                     PendingIntent.FLAG_UPDATE_CURRENT | PendingIntent.FLAG_IMMUTABLE);
         }
         if (pi != null) b.setContentIntent(pi);
-        try { nm.notify(key.hashCode(), b.build()); } catch (SecurityException ignored) { }
+        try {
+            nm.notify(key.hashCode(), b.build());
+            if (!ongoing) {
+                // تنبيه ملخّص يجمع ترجمات نفس التطبيق في مجموعة واحدة مرتبة
+                Notification.Builder sum = Build.VERSION.SDK_INT >= 26
+                        ? new Notification.Builder(this, channel) : new Notification.Builder(this);
+                sum.setSmallIcon(R.drawable.ic_notify)
+                        .setSubText(app)
+                        .setContentTitle(app)
+                        .setGroup(group)
+                        .setGroupSummary(true)
+                        .setAutoCancel(true)
+                        .setOnlyAlertOnce(true);
+                if (Build.VERSION.SDK_INT >= 26) sum.setGroupAlertBehavior(Notification.GROUP_ALERT_CHILDREN);
+                if (pi != null) sum.setContentIntent(pi);
+                nm.notify(("sum_" + pkg).hashCode(), sum.build());
+            }
+        } catch (SecurityException ignored) { }
+    }
+
+    private android.graphics.Bitmap appIcon(String pkg) {
+        try {
+            android.graphics.drawable.Drawable d = getPackageManager().getApplicationIcon(pkg);
+            int size = (int) (64 * getResources().getDisplayMetrics().density);
+            android.graphics.Bitmap bmp = android.graphics.Bitmap.createBitmap(size, size, android.graphics.Bitmap.Config.ARGB_8888);
+            android.graphics.Canvas c = new android.graphics.Canvas(bmp);
+            d.setBounds(0, 0, size, size);
+            d.draw(c);
+            return bmp;
+        } catch (Exception e) { return null; }
     }
 
     @Override

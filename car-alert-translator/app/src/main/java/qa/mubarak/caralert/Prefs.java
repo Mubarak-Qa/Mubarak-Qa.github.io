@@ -27,7 +27,11 @@ final class Prefs {
     private static final String K_LOG = "log";
     private static final int MAX_LOG = 50;
 
-    static final String DEFAULT_DICT = "比亚迪=BYD\n方程豹=Fangchengbao\n";
+    /** الصيغة: صيني=عربي|English (إذا كُتبت قيمة واحدة تُستخدم للغتين). */
+    static final String DEFAULT_DICT = "比亚迪=بي واي دي|BYD\n方程豹=فانغ تشنغ باو|Fangchengbao\n"
+            + "豹8=ليوبارد 8|Leopard 8\n豹5=ليوبارد 5|Leopard 5\n提醒您：=—\n";
+    private static final String OLD_DEFAULT_DICT = "比亚迪=BYD\n方程豹=Fangchengbao\n";
+    private static final String K_SHOW_ORIG = "show_original";
 
     private static SharedPreferences sp(Context c) {
         SharedPreferences s = c.getSharedPreferences(FILE, Context.MODE_PRIVATE);
@@ -78,7 +82,13 @@ final class Prefs {
     static boolean online(Context c) { return sp(c).getBoolean(K_ONLINE, true); }
     static void setOnline(Context c, boolean v) { sp(c).edit().putBoolean(K_ONLINE, v).apply(); }
 
-    static String dictionary(Context c) { return sp(c).getString(K_DICT, DEFAULT_DICT); }
+    static String dictionary(Context c) {
+        String d = sp(c).getString(K_DICT, DEFAULT_DICT);
+        return d.trim().equals(OLD_DEFAULT_DICT.trim()) ? DEFAULT_DICT : d;
+    }
+
+    static boolean showOriginal(Context c) { return sp(c).getBoolean(K_SHOW_ORIG, false); }
+    static void setShowOriginal(Context c, boolean v) { sp(c).edit().putBoolean(K_SHOW_ORIG, v).apply(); }
     static void setDictionary(Context c, String v) { sp(c).edit().putString(K_DICT, v).apply(); }
 
     static synchronized void addLog(Context c, String app, String original, String translated, String engine) {

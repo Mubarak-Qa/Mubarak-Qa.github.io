@@ -149,6 +149,7 @@ public class MainActivity extends Activity {
         LinearLayout c4 = card(root, "4", t("sec_options"));
         c4.addView(sw(t("online"), Prefs.online(this), (b, c) -> Prefs.setOnline(this, c)));
         c4.addView(sw(t("hide"), Prefs.hideOriginal(this), (b, c) -> Prefs.setHideOriginal(this, c)));
+        c4.addView(sw(t("show_orig"), Prefs.showOriginal(this), (b, c) -> Prefs.setShowOriginal(this, c)));
         modelStatus = small(t("model_note"));
         c4.addView(modelStatus);
         c4.addView(secondaryButton(t("model_btn"), v -> downloadModel()));

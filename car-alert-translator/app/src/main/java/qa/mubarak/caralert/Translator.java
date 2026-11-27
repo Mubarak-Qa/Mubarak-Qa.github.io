@@ -44,7 +44,7 @@ final class Translator {
     static Result translate(Context ctx, String text, String lang) {
         if (text == null || text.trim().isEmpty() || !hasChinese(text)) return new Result(text, "-");
 
-        text = applyDictionary(ctx, text);
+        text = applyDictionary(ctx, text, lang);
         if (!hasChinese(text)) return new Result(text, "dictionary");
 
         SharedPreferences cache = ctx.getSharedPreferences("cache_" + lang, Context.MODE_PRIVATE);
@@ -54,6 +54,9 @@ final class Translator {
         String out = null; String engine = null;
         if (Prefs.online(ctx)) {
             try { out = online(text, lang); engine = "online"; } catch (Exception ignored) { }
+            if (out == null) {
+                try { out = online2(text, lang); engine = "online"; } catch (Exception ignored) { }
+            }
         }
         if (out == null) {
             try { out = offline(text, lang); engine = "offline"; } catch (Exception ignored) { }
@@ -66,12 +69,14 @@ final class Translator {
     }
 
     /** يستبدل الكلمات من القاموس المخصص (الأطول أولاً). */
-    static String applyDictionary(Context ctx, String text) {
+    static String applyDictionary(Context ctx, String text, String lang) {
         java.util.List<String[]> pairs = new java.util.ArrayList<>();
         for (String line : Prefs.dictionary(ctx).split("\\r?\\n")) {
             int i = line.indexOf('=');
             if (i <= 0) continue;
             String k = line.substring(0, i).trim(), v = line.substring(i + 1).trim();
+            int bar = v.indexOf('|');
+            if (bar >= 0) v = ("en".equals(lang) ? v.substring(bar + 1) : v.substring(0, bar)).trim();
             if (!k.isEmpty()) pairs.add(new String[]{k, v});
         }
         pairs.sort((a, b) -> b[0].length() - a[0].length());
@@ -87,6 +92,7 @@ final class Translator {
         HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
         con.setConnectTimeout(6000);
         con.setReadTimeout(6000);
+        con.setInstanceFollowRedirects(false);
         con.setRequestProperty("User-Agent", "Mozilla/5.0");
         try {
             if (con.getResponseCode() != 200) throw new Exception("HTTP " + con.getResponseCode());
@@ -101,6 +107,32 @@ final class Translator {
                 if (p != null && !p.isNull(0)) res.append(p.getString(0));
             }
             String s = res.toString().trim();
+            if (s.isEmpty()) throw new Exception("empty");
+            return s;
+        } finally {
+            con.disconnect();
+        }
+    }
+
+    /** نقطة ترجمة جوجل بديلة. */
+    private static String online2(String text, String lang) throws Exception {
+        String url = "https://clients5.google.com/translate_a/t?client=dict-chrome-ex&sl=zh-CN&tl="
+                + lang + "&q=" + URLEncoder.encode(text, "UTF-8");
+        HttpURLConnection con = (HttpURLConnection) new URL(url).openConnection();
+        con.setConnectTimeout(6000);
+        con.setReadTimeout(6000);
+        con.setInstanceFollowRedirects(false);
+        con.setRequestProperty("User-Agent", "Mozilla/5.0");
+        try {
+            if (con.getResponseCode() != 200) throw new Exception("HTTP " + con.getResponseCode());
+            StringBuilder sb = new StringBuilder();
+            try (BufferedReader r = new BufferedReader(new InputStreamReader(con.getInputStream(), StandardCharsets.UTF_8))) {
+                String line; while ((line = r.readLine()) != null) sb.append(line);
+            }
+            JSONArray arr = new JSONArray(sb.toString());
+            Object first = arr.get(0);
+            String s = first instanceof JSONArray ? ((JSONArray) first).getString(0) : String.valueOf(first);
+            s = s.trim();
             if (s.isEmpty()) throw new Exception("empty");
             return s;
         } finally {

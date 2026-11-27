@@ -40,8 +40,8 @@ final class L {
         p("model_ok", "✅ تم تنزيل النموذج.", "✅ Model downloaded.");
         p("model_fail", "❌ فشل التنزيل: ", "❌ Download failed: ");
         p("sec_dict", "قاموس مخصص", "Custom dictionary");
-        p("dict_note", "كل سطر بالشكل: كلمة صينية=الترجمة. يُطبَّق قبل الترجمة الآلية، وهو مفيد لأسماء الماركات والموديلات.",
-                "One entry per line: Chinese=translation. Applied before machine translation. Useful for brand and model names.");
+        p("dict_note", "كل سطر بالشكل: صيني=عربي|English. يُطبَّق قبل الترجمة الآلية، وهو مفيد لأسماء الماركات والموديلات.",
+                "One entry per line: Chinese=Arabic|English. Applied before machine translation. Useful for brand and model names.");
         p("dict_saved", "تم حفظ القاموس ✅", "Dictionary saved ✅");
         p("sec_test", "تجربة الترجمة", "Try a translation");
         p("translate", "ترجم", "Translate");
@@ -57,6 +57,7 @@ final class L {
         p("original", "الأصل: ", "Original: ");
         p("default_title", "تنبيه", "Notification");
         p("theme_desc", "تبديل الوضع النهاري/الليلي", "Toggle light/dark mode");
+        p("show_orig", "إظهار النص الصيني الأصلي تحت الترجمة", "Show the original Chinese text under the translation");
         p("remove", "إزالة", "Remove");
         p("lang_desc", "تغيير اللغة", "Change language");
     }
